@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Customers • Mr. Tucker's DMS</title>
+</head>
+<body class="light">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">MT</div>
+      <div>
+        <div class="brand-title">Mr. Tucker's DMS</div>
+        <div class="brand-subtitle">Dealership Management System (Front-end demo)</div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <div id="sessionBadge" class="badge subtle" aria-live="polite">Not signed in</div>
+      <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
+    </div>
+  </header>
+<main class="layout">
+    <nav class="sidebar" aria-label="Primary">
+      <a class="nav-item" href="dashboard.html">Dashboard</a><a class="nav-item" href="inventory.html">Inventory</a><a class="nav-item active" href="customers.html">Customers</a><a class="nav-item" href="transactions.html">Transactions</a><a class="nav-item" href="reports.html">Reports</a>
+      <div class="nav-divider"></div>
+      <a class="nav-item" href="search.html">Search</a><a class="nav-item" href="settings.html">Settings</a>
+      <div class="nav-footer">
+        <div class="hint">
+          <strong>Demo note</strong><br />
+          Data is stored in your browser (localStorage). This is a front-end only prototype.
+        </div>
+      </div>
+    </nav>
+  <section class="content">
+    <section class="panel">
+      <div class="panel-header">
+        <h1>Customers</h1>
+        <p class="muted">Record customer info (license, address, credit score, history).</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>Add / Update customer</h2>
+          <form id="customerForm" class="form">
+            <input id="customerId" type="hidden" />
+
+            <div class="grid three tight">
+              <label>
+                First name
+                <input id="custFirst" required />
+              </label>
+              <label>
+                Middle initial
+                <input id="custMiddle" maxlength="1" />
+              </label>
+              <label>
+                Last name
+                <input id="custLast" required />
+              </label>
+            </div>
+
+            <label>
+              Address
+              <input id="custAddress" required placeholder="Street, City, State/Region" />
+            </label>
+
+            <div class="grid two tight">
+              <label>
+                Phone 1
+                <input id="custPhone1" required placeholder="+1 555 123 4567" />
+              </label>
+              <label>
+                Phone 2 (optional)
+                <input id="custPhone2" placeholder="+1 555 987 6543" />
+              </label>
+            </div>
+
+            <div class="grid two tight">
+              <label>
+                Driver's license #
+                <input id="custLicense" required placeholder="DL1234567" />
+              </label>
+              <label>
+                Credit score (0–850)
+                <input id="custCredit" type="number" min="0" max="850" required placeholder="720" />
+              </label>
+            </div>
+
+            <div class="row">
+              <button class="btn primary" type="submit">Save customer</button>
+              <button class="btn" type="button" id="btnCustomerReset">Clear</button>
+            </div>
+
+            <p class="muted small">
+              Basic rule enforced here: customer must have a license on file to purchase.
+            </p>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Customer list</h2>
+          <div class="row">
+            <input id="customerFilter" class="grow" placeholder="Filter by name/license/phone…" />
+            <button class="btn" id="btnExportCustomers" type="button">Export JSON</button>
+          </div>
+          <div id="customerList" class="table-wrap" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
