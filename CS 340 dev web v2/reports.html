@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Reports • Mr. Tucker's DMS</title>
+</head>
+<body class="light">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">MT</div>
+      <div>
+        <div class="brand-title">Mr. Tucker's DMS</div>
+        <div class="brand-subtitle">Dealership Management System (Front-end demo)</div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <div id="sessionBadge" class="badge subtle" aria-live="polite">Not signed in</div>
+      <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
+    </div>
+  </header>
+<main class="layout">
+    <nav class="sidebar" aria-label="Primary">
+      <a class="nav-item" href="dashboard.html">Dashboard</a><a class="nav-item" href="inventory.html">Inventory</a><a class="nav-item" href="customers.html">Customers</a><a class="nav-item" href="transactions.html">Transactions</a><a class="nav-item active" href="reports.html">Reports</a>
+      <div class="nav-divider"></div>
+      <a class="nav-item" href="search.html">Search</a><a class="nav-item" href="settings.html">Settings</a>
+      <div class="nav-footer">
+        <div class="hint">
+          <strong>Demo note</strong><br />
+          Data is stored in your browser (localStorage). This is a front-end only prototype.
+        </div>
+      </div>
+    </nav>
+  <section class="content">
+    <section class="panel">
+      <div class="panel-header">
+        <h1>Reports</h1>
+        <p class="muted">Commission, sales totals, and inventory overview.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>Commission calculator</h2>
+          <p class="muted small">
+            Tiers: 5% ≤ 100k, 7% for 100k–200k, 10% &gt; 200k.
+          </p>
+
+          <form id="commissionForm" class="form">
+            <label>
+              Month (YYYY-MM)
+              <input id="commMonth" type="month" required />
+            </label>
+
+            <label>
+              Salesperson username
+              <input id="commUser" required placeholder="salesperson1" />
+            </label>
+
+            <div class="row">
+              <button class="btn primary" type="submit">Calculate commission</button>
+            </div>
+          </form>
+
+          <div id="commissionResult" class="callout" hidden></div>
+        </div>
+
+        <div class="card">
+          <h2>Sales overview</h2>
+          <div id="salesOverview" class="mono small muted">No data.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Inventory health</h2>
+        <div id="inventoryHealth" class="table-wrap"></div>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

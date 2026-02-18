@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Transactions • Mr. Tucker's DMS</title>
+</head>
+<body class="light">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">MT</div>
+      <div>
+        <div class="brand-title">Mr. Tucker's DMS</div>
+        <div class="brand-subtitle">Dealership Management System (Front-end demo)</div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <div id="sessionBadge" class="badge subtle" aria-live="polite">Not signed in</div>
+      <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
+    </div>
+  </header>
+<main class="layout">
+    <nav class="sidebar" aria-label="Primary">
+      <a class="nav-item" href="dashboard.html">Dashboard</a><a class="nav-item" href="inventory.html">Inventory</a><a class="nav-item" href="customers.html">Customers</a><a class="nav-item active" href="transactions.html">Transactions</a><a class="nav-item" href="reports.html">Reports</a>
+      <div class="nav-divider"></div>
+      <a class="nav-item" href="search.html">Search</a><a class="nav-item" href="settings.html">Settings</a>
+      <div class="nav-footer">
+        <div class="hint">
+          <strong>Demo note</strong><br />
+          Data is stored in your browser (localStorage). This is a front-end only prototype.
+        </div>
+      </div>
+    </nav>
+  <section class="content">
+    <section class="panel">
+      <div class="panel-header">
+        <h1>Transactions</h1>
+        <p class="muted">Create purchases and trade-ins, then generate an invoice.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>New transaction</h2>
+          <form id="txForm" class="form">
+            <div class="grid two tight">
+              <label>
+                Type
+                <select id="txType" required>
+                  <option value="purchase">Purchase vehicle</option>
+                  <option value="tradein">Trade-in vehicle</option>
+                </select>
+              </label>
+              <label>
+                Date
+                <input id="txDate" type="date" required />
+              </label>
+            </div>
+
+            <label>
+              Customer
+              <select id="txCustomer" required></select>
+            </label>
+
+            <label>
+              Salesperson username
+              <input id="txSalesperson" required placeholder="salesperson1" />
+            </label>
+
+            <div class="grid two tight">
+              <label>
+                Vehicle being purchased (VIN)
+                <select id="txVehicleBuy" required></select>
+              </label>
+              <label>
+                Purchase price override (optional)
+                <input id="txPriceOverride" type="number" min="0" step="0.01" placeholder="leave blank" />
+              </label>
+            </div>
+
+            <div id="tradeinFields" class="card subtle" hidden>
+              <h3>Trade-in details</h3>
+              <div class="grid two tight">
+                <label>
+                  Trade-in make
+                  <input id="txTradeMake" placeholder="Honda" />
+                </label>
+                <label>
+                  Trade-in model
+                  <input id="txTradeModel" placeholder="Civic" />
+                </label>
+              </div>
+
+              <div class="grid three tight">
+                <label>
+                  Trade-in year
+                  <input id="txTradeYear" type="number" min="1980" max="2050" placeholder="2016" />
+                </label>
+                <label>
+                  Mileage
+                  <input id="txTradeMileage" type="number" min="0" step="1" placeholder="85000" />
+                </label>
+                <label>
+                  Condition note
+                  <input id="txTradeCondition" placeholder="Good / fair / needs work…" />
+                </label>
+              </div>
+
+              <label>
+                Trade-in value (USD)
+                <input id="txTradeValue" type="number" min="0" step="0.01" placeholder="8000" />
+              </label>
+
+              <p class="muted small">
+                Trade-ins are automatically added to inventory as a trade-in vehicle.
+              </p>
+            </div>
+
+            <div class="row">
+              <button class="btn primary" type="submit">Save transaction</button>
+              <button class="btn" type="button" id="btnTxReset">Clear</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Transactions</h2>
+          <div class="row">
+            <button class="btn" id="btnExportTx" type="button">Export JSON</button>
+            <button class="btn" id="btnClearInvoices" type="button">Clear invoices</button>
+          </div>
+          <div id="txList" class="table-wrap" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Invoice preview</h2>
+        <p class="muted small">
+          Select a transaction to view its invoice. Use your browser print dialog to print.
+        </p>
+        <div class="row">
+          <button class="btn" id="btnPrintInvoice" type="button" disabled>Print invoice</button>
+          <button class="btn" id="btnCopyInvoice" type="button" disabled>Copy invoice text</button>
+        </div>
+        <pre id="invoicePreview" class="invoice mono" aria-live="polite">No invoice selected.</pre>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
