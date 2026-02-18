@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Log in • Mr. Tucker's DMS</title>
+</head>
+<body class="light">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">MT</div>
+      <div>
+        <div class="brand-title">Mr. Tucker's DMS</div>
+        <div class="brand-subtitle">Dealership Management System (Front-end demo)</div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <div id="sessionBadge" class="badge subtle" aria-live="polite">Not signed in</div>
+      <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
+    </div>
+  </header>
+<main class="layout">
+    <nav class="sidebar" aria-label="Primary">
+      <div class="hint">
+        <strong>Sign in</strong><br />
+        Use password <code>demo</code>.
+      </div>
+    </nav>
+  <section class="content">
+    <section class="panel">
+      <h1>Log in</h1>
+      <p class="muted">
+        Demo login. In a real system this would validate against a server and enforce roles.
+      </p>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>Credentials</h2>
+          <form id="loginForm" class="form">
+            <label>
+              Username
+              <input id="loginUser" autocomplete="username" required placeholder="e.g., salesperson1" />
+            </label>
+
+            <label>
+              Password
+              <input id="loginPass" type="password" autocomplete="current-password" required placeholder="demo" />
+            </label>
+
+            <label>
+              Role
+              <select id="loginRole" required>
+                <option value="salesperson">Salesperson</option>
+                <option value="manager">Manager</option>
+              </select>
+            </label>
+
+            <div class="row">
+              <button class="btn primary" type="submit">Sign in</button>
+              <button class="btn" type="button" id="btnLoadDemo">Load demo data</button>
+            </div>
+
+            <p class="muted small">
+              Password is <code>demo</code>. Any username works for this prototype.
+            </p>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Features in this demo</h2>
+          <ul class="list">
+            <li>Vehicles (new/used/trade-in) + stock counts</li>
+            <li>Customers (license, address, credit score)</li>
+            <li>Transactions + invoice generation</li>
+            <li>Discount rule + commission calculator</li>
+            <li>Global search + export/backup</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
