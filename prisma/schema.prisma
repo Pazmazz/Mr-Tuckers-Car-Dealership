@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Credit_card {
+  credit_card_number Int        @id @default(autoincrement())
+  holder_name        String
+  security_code      Int
+  expiration_date    String
+  zip_code           Int
+  Customer           Customer[]
+
+  @@map("Credit card")
+}
+
+model Customer {
+  customer_id        Int               @id @default(autoincrement())
+  customer_name      String
+  credit_score       Int
+  drivers_license_id Int
+  credit_card_number Int
+  Driver_s_License   Driver_s_License @relation(fields: [drivers_license_id], references: [drivers_license_id], onDelete: NoAction, onUpdate: NoAction)
+  Credit_card        Credit_card      @relation(fields: [credit_card_number], references: [credit_card_number], onDelete: NoAction, onUpdate: NoAction)
+  Transactions       Transactions[]
+}
+
+model Driver_s_License {
+  drivers_license_id Int        @id @default(autoincrement())
+  holder_name        String
+  expiration_date    String
+  address            String
+  birth_date         String
+  sex                String
+  eye_color          String
+  weight             Int
+  restrictions       String
+  Customer           Customer[]
+
+  @@map("Driver's License")
+}
+
+model Employee {
+  employee_id       Int                @id @default(autoincrement())
+  department        String
+  manager           Int
+  commission        Int
+  employee_name     String
+  Log_In_Creditials Log_In_Creditials?
+  Transactions      Transactions[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Log_In_Creditials {
+  employee_id Int      @id @default(autoincrement())
+  password    String
+  username    String
+  Employee    Employee @relation(fields: [employee_id], references: [employee_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("Log In Creditials")
+}
+
+model Transactions {
+  transaction_id Int       @id @default(autoincrement())
+  date           String
+  time           Int
+  discount       Int
+  price_paid     Int
+  price_offered  Int
+  employee_id    Int
+  customer_id    Int
+  vehicle_id     Int
+  Vehicle        Vehicle  @relation(fields: [vehicle_id], references: [vehicle_id], onDelete: NoAction, onUpdate: NoAction)
+  Employee       Employee @relation(fields: [employee_id], references: [employee_id], onDelete: NoAction, onUpdate: NoAction)
+  Customer       Customer @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Vehicle {
+  vehicle_id    Int            @id @default(autoincrement())
+  vehicle_type  String
+  vehicle_brand String
+  model_year    Int
+  is_used       Int
+  mileage       Int
+  vehicle_price Int
+  Transactions  Transactions[]
+}
