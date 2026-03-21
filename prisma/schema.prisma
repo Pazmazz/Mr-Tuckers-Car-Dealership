@@ -51,7 +51,7 @@ model Employee {
   commission        Int
   employee_name     String
   Log_In_Creditials Log_In_Creditials?
-  Transactions      Transactions[]
+  Transactions      Transactions[]?
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
