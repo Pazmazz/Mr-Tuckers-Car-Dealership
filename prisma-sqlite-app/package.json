@@ -11,6 +11,6 @@
   "license": "ISC",
   "type": "commonjs",
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "seed": "node ./prisma/seed.js"
   }
 }
