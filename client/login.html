@@ -3,87 +3,104 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="./css/styles.css" />
-  <title>Log in • Mr. Tucker's DMS</title>
+  <meta name="color-scheme" content="dark light" />
+  <!-- ⚡ No-flash theme: apply before first paint -->
+  <script>(function(){var t=localStorage.getItem('mt_theme');if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.classList.add('notransition');})();</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Sign in • Mr. Tucker's DMS</title>
 </head>
-<body class="light">
-  <header class="topbar">
-    <div class="brand">
+<body class="auth-page">
+
+  <div class="auth-bg" aria-hidden="true">
+    <div class="auth-bg-orb orb-1"></div>
+    <div class="auth-bg-orb orb-2"></div>
+    <div class="auth-bg-orb orb-3"></div>
+  </div>
+
+  <div class="auth-card">
+
+    <div class="auth-brand">
       <div class="logo" aria-hidden="true">MT</div>
       <div>
         <div class="brand-title">Mr. Tucker's DMS</div>
-        <div class="brand-subtitle">Dealership Management System (Front-end demo)</div>
+        <div class="brand-subtitle">Dealership Management System</div>
       </div>
     </div>
 
-    <div class="topbar-actions">
-      <div id="sessionBadge" class="badge subtle" aria-live="polite">Not signed in</div>
-      <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
+    <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+      <button class="auth-tab active" id="tabLogin" role="tab"
+              aria-selected="true" aria-controls="panelLogin"
+              data-panel="panelLogin" type="button">Sign in</button>
+      <button class="auth-tab" id="tabRegister" role="tab"
+              aria-selected="false" aria-controls="panelRegister"
+              data-panel="panelRegister" type="button">Register</button>
     </div>
-  </header>
-<main class="layout">
-    <nav class="sidebar" aria-label="Primary">
-      <div class="hint">
-        <strong>Sign in</strong><br />
-        Use password <code>demo</code>.
-      </div>
-    </nav>
-  <section class="content">
-    <section class="panel">
-      <h1>Log in</h1>
-      <p class="muted">
-        Demo login. In a real system this would validate against a server and enforce roles.
-      </p>
 
-      <div class="grid two">
-        <div class="card">
-          <h2>Credentials</h2>
-          <form id="loginForm" class="form">
-            <label>
-              Username
-              <input id="loginUser" autocomplete="username" required placeholder="e.g., salesperson1" />
-            </label>
-
-            <label>
-              Password
-              <input id="loginPass" type="password" autocomplete="current-password" required placeholder="demo" />
-            </label>
-
-            <label>
-              Role
-              <select id="loginRole" required>
-                <option value="salesperson">Salesperson</option>
-                <option value="manager">Manager</option>
-              </select>
-            </label>
-
-            <div class="row">
-              <button class="btn primary" type="submit">Sign in</button>
-              <button class="btn" type="button" id="btnLoadDemo">Load demo data</button>
-            </div>
-
-            <p class="muted small">
-              Password is <code>demo</code>. Any username works for this prototype.
-            </p>
-          </form>
+    <!-- Login -->
+    <div class="auth-panel" id="panelLogin" role="tabpanel" aria-labelledby="tabLogin">
+      <form id="loginForm">
+        <div class="field floating">
+          <input id="loginUser" type="text" placeholder=" " autocomplete="username" required />
+          <label for="loginUser">Username</label>
         </div>
-
-        <div class="card">
-          <h2>Features in this demo</h2>
-          <ul class="list">
-            <li>Vehicles (new/used/trade-in) + stock counts</li>
-            <li>Customers (license, address, credit score)</li>
-            <li>Transactions + invoice generation</li>
-            <li>Discount rule + commission calculator</li>
-            <li>Global search + export/backup</li>
-          </ul>
+        <div class="field floating">
+          <input id="loginPass" type="password" placeholder=" " autocomplete="current-password" required />
+          <label for="loginPass">Password</label>
         </div>
-      </div>
-    </section>
-  </section>
-</main>
+        <div>
+          <div class="field-label">Role</div>
+          <select id="loginRole" required>
+            <option value="salesperson">Salesperson</option>
+            <option value="manager">Manager</option>
+          </select>
+        </div>
+        <button class="btn primary full" type="submit" style="margin-top:4px">
+          <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8.5 1l5.5 6.5-5.5 6.5M14 7.5H1"/></svg>
+          Sign in
+        </button>
+        <button class="btn ghost full" type="button" id="btnLoadDemo">Load demo data</button>
+        <p class="auth-hint">Demo password is <code>demo</code> — any username works.</p>
+      </form>
+    </div>
 
-<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-<script src="app.js"></script>
+    <!-- Register -->
+    <div class="auth-panel" id="panelRegister" role="tabpanel" aria-labelledby="tabRegister" hidden>
+      <form id="registerForm">
+        <div class="field floating">
+          <input id="regName" type="text" placeholder=" " required />
+          <label for="regName">Full name</label>
+        </div>
+        <div class="field floating">
+          <input id="regUser" type="text" placeholder=" " autocomplete="username" required />
+          <label for="regUser">Username</label>
+        </div>
+        <div>
+          <div class="field-label">Role</div>
+          <select id="regRole" required>
+            <option value="salesperson">Salesperson</option>
+            <option value="manager">Manager</option>
+          </select>
+        </div>
+        <div class="field floating">
+          <input id="regPass" type="password" placeholder=" " autocomplete="new-password" required />
+          <label for="regPass">Password</label>
+        </div>
+        <div class="field floating">
+          <input id="regPassConfirm" type="password" placeholder=" " autocomplete="new-password" required />
+          <label for="regPassConfirm">Confirm password</label>
+        </div>
+        <button class="btn primary full" type="submit" style="margin-top:4px">
+          <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>
+          Create account
+        </button>
+        <p class="auth-hint">Demo system — password must be <code>demo</code>.</p>
+      </form>
+    </div>
+
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+  <script src="app.js"></script>
 </body>
 </html>
