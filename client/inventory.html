@@ -3,126 +3,185 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="./css/styles.css" />
-  <title>Inventory • Mr. Tucker's DMS</title>
+  <meta name="color-scheme" content="dark light" />
+  <script>(function(){var t=localStorage.getItem('mt_theme');if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.classList.add('notransition');})();</script>
+  <style>.content{opacity:0;transform:translateY(6px)}</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Dashboard • Mr. Tucker's DMS</title>
 </head>
-<body class="light">
-  <header class="topbar">
-    <div class="brand">
+<body>
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar" aria-label="Primary navigation">
+    <div class="sidebar-brand">
       <div class="logo" aria-hidden="true">MT</div>
       <div>
         <div class="brand-title">Mr. Tucker's DMS</div>
-        <div class="brand-subtitle">Dealership Management System (Front-end demo)</div>
+        <div class="brand-subtitle">Dealership Management</div>
       </div>
     </div>
 
-    <div class="topbar-actions">
-      <div id="sessionBadge" class="badge subtle" aria-live="polite">Not signed in</div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <a class="nav-item active" href="dashboard.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="1" width="5.5" height="5.5" rx="1"/><rect x="1" y="8.5" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="inventory.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.5l2-4h7l2 4"/><rect x="1.5" y="8.5" width="12" height="3" rx="1"/><circle cx="4" cy="11.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="11" cy="11.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+        Inventory
+        <span class="nav-badge" id="nbInventory"></span>
+      </a>
+      <a class="nav-item" href="customers.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>
+        Customers
+        <span class="nav-badge" id="nbCustomers"></span>
+      </a>
+      <a class="nav-item" href="transactions.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="1.5" width="9" height="12" rx="1.5"/><path d="M5.5 5h4M5.5 7.5h4M5.5 10h2.5"/></svg>
+        Transactions
+        <span class="nav-badge" id="nbTransactions"></span>
+      </a>
+      <a class="nav-item" href="reports.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>
+        Reports
+      </a>
+      <a class="nav-item" id="navAnalytics" href="analytics.html" hidden>
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 13.5V8.5M5.5 13.5V5.5M9.5 13.5V3.5M13.5 13.5V1.5"/></svg>
+        Analytics
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <a class="nav-item" href="search.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg>
+        Search
+      </a>
+      <a class="nav-item" href="settings.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M7.5 1l1.2 3.6 3.8-.4-2.4 2.9 1.2 3.6-3.8-1.8-3.8 1.8 1.2-3.6L2.5 4.2l3.8.4z"/></svg>
+        Discount Calc
+      </a>
+      <a class="nav-item" href="utilities.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 7.5h10M7.5 2.5v10M4.5 4.5l6 6M10.5 4.5l-6 6"/></svg>
+        Utilities
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="nav-label">
+        Team
+        <span id="onlineCount" style="font-weight:500;text-transform:none;letter-spacing:0;font-size:11px;margin-left:4px;color:var(--ok)"></span>
+      </div>
+      <div id="peopleOnline" class="people-list"></div>
+    </div>
+  </nav>
+
+  <!-- ── App body ── -->
+  <div class="app-body">
+    <header class="topbar">
+      <div class="topbar-search">
+        <svg class="topbar-search-icon" width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg>
+        <input class="topbar-search-input" id="topbarSearchInput" type="search" placeholder="Search anything…" autocomplete="off" />
+      </div>
+      <div class="topbar-spacer"></div>
+      <button class="btn-filter" type="button" aria-label="Sort">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h11M4 8h7M6 12h3"/></svg>
+        Sort by
+      </button>
+      <button class="btn-filter" type="button" aria-label="Filter">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 3h12M4 7.5h7M6.5 12h2"/></svg>
+        Filters
+      </button>
+      <div class="topbar-profile-chip" id="topbarProfile" title="Signed-in user">
+        <div class="topbar-avatar" id="topbarAvatarEl">?</div>
+        <div>
+          <div class="topbar-profile-name" id="topbarUsername">Me</div>
+          <div class="topbar-profile-role" id="topbarRole">Guest</div>
+        </div>
+      </div>
+      <button id="btnTheme" class="btn-icon" type="button" aria-label="Toggle theme" title="Toggle light / dark">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 7.5a5.5 5.5 0 0 0 9.9 3.28A5.5 5.5 0 0 1 6.22 1.1 5.5 5.5 0 0 0 2 7.5z"/></svg>
+      </button>
       <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
-    </div>
-  </header>
-<main class="layout">
-    <nav class="sidebar" aria-label="Primary">
-      <a class="nav-item" href="dashboard.html">Dashboard</a><a class="nav-item active" href="inventory.html">Inventory</a><a class="nav-item" href="customers.html">Customers</a><a class="nav-item" href="transactions.html">Transactions</a><a class="nav-item" href="reports.html">Reports</a>
-      <div class="nav-divider"></div>
-      <a class="nav-item" href="search.html">Search</a><a class="nav-item" href="settings.html">Settings</a>
-      <div class="nav-footer">
-        <div class="hint">
-          <strong>Demo note</strong><br />
-          Data is stored in your browser (localStorage). This is a front-end only prototype.
-        </div>
-      </div>
-    </nav>
-  <section class="content">
-    <section class="panel">
-      <div class="panel-header">
-        <h1>Inventory</h1>
-        <p class="muted">Add vehicles, update stock, and mark as new/used/trade-in.</p>
-      </div>
+      <a class="btn primary sm" href="transactions.html">+ New transaction</a>
+    </header>
 
-      <div class="grid two">
-        <div class="card">
-          <h2>Add / Update vehicle</h2>
-          <form id="vehicleForm" class="form">
-            <input id="vehicleId" type="hidden" />
-
-            <label>
-              VIN (unique)
-              <input id="vehicleVin" required placeholder="e.g., 1HGCM82633A004352" />
-            </label>
-
-            <div class="grid two tight">
-              <label>
-                Make
-                <input id="vehicleMake" required placeholder="Toyota" />
-              </label>
-              <label>
-                Model
-                <input id="vehicleModel" required placeholder="Camry" />
-              </label>
-            </div>
-
-            <div class="grid three tight">
-              <label>
-                Year
-                <input id="vehicleYear" type="number" min="1980" max="2050" required placeholder="2024" />
-              </label>
-              <label>
-                Category
-                <select id="vehicleCategory" required>
-                  <option value="family">Family</option>
-                  <option value="sport">Sport</option>
-                  <option value="recreational">Recreational</option>
-                </select>
-              </label>
-              <label>
-                Condition
-                <select id="vehicleCondition" required>
-                  <option value="new">New</option>
-                  <option value="used">Used</option>
-                  <option value="trade-in">Trade-in</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="grid three tight">
-              <label>
-                Mileage (used/trade-in)
-                <input id="vehicleMileage" type="number" min="0" step="1" placeholder="0" />
-              </label>
-              <label>
-                Price (USD)
-                <input id="vehiclePrice" type="number" min="0" step="0.01" required placeholder="45000" />
-              </label>
-              <label>
-                Stock count
-                <input id="vehicleStock" type="number" min="0" step="1" required placeholder="1" />
-              </label>
-            </div>
-
-            <div class="row">
-              <button class="btn primary" type="submit">Save vehicle</button>
-              <button class="btn" type="button" id="btnVehicleReset">Clear</button>
-            </div>
-
-            <p class="muted small">
-              VIN is used as the unique key. Stock is decremented when you record a purchase.
-            </p>
-          </form>
+    <main class="content">
+      <div class="panel">
+        <div class="panel-header">
+          <h1>Dashboard</h1>
+          <p class="muted">Overview of your dealership at a glance.</p>
         </div>
 
-        <div class="card">
-          <h2>Current vehicles</h2>
-          <div class="row">
-            <input id="inventoryFilter" class="grow" placeholder="Filter by make/model/VIN…" />
-            <button class="btn" id="btnExportInventory" type="button">Export JSON</button>
+        <div class="grid three">
+          <div class="stat-card card">
+            <div class="stat-card-header">
+              <div class="stat-card-label">Vehicles in Stock</div>
+              <div class="stat-card-icon purple" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5l2-4h7l2 4"/><rect x="1.5" y="8.5" width="12" height="3" rx="1"/><circle cx="4" cy="11.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="11" cy="11.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+              </div>
+            </div>
+            <div id="statVehicles" class="stat-card-value">0</div>
+            <div class="stat-card-footer"><a href="inventory.html" class="stat-card-link">View inventory →</a></div>
           </div>
-          <div id="inventoryList" class="table-wrap" aria-live="polite"></div>
+          <div class="stat-card card">
+            <div class="stat-card-header">
+              <div class="stat-card-label">Customers</div>
+              <div class="stat-card-icon green" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>
+              </div>
+            </div>
+            <div id="statCustomers" class="stat-card-value">0</div>
+            <div class="stat-card-footer"><a href="customers.html" class="stat-card-link">View customers →</a></div>
+          </div>
+          <div class="stat-card card">
+            <div class="stat-card-header">
+              <div class="stat-card-label">Transactions</div>
+              <div class="stat-card-icon blue" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="1.5" width="9" height="12" rx="1.5"/><path d="M5.5 5h4M5.5 7.5h4M5.5 10h2.5"/></svg>
+              </div>
+            </div>
+            <div id="statTransactions" class="stat-card-value">0</div>
+            <div class="stat-card-footer"><a href="transactions.html" class="stat-card-link">View transactions →</a></div>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="card">
+            <h2>Most Recent Invoice</h2>
+            <div id="recentInvoice" class="mono small muted" style="white-space:pre-wrap;line-height:1.7">No invoices yet.</div>
+          </div>
+          <div class="card">
+            <h2>Quick Actions</h2>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <a class="btn primary" href="transactions.html">
+                <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7.5 1v14M1 7.5h14"/></svg>
+                New transaction
+              </a>
+              <a class="btn" href="inventory.html">
+                <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.5l2-4h7l2 4"/><rect x="1.5" y="8.5" width="12" height="3" rx="1"/><circle cx="4" cy="11.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="11" cy="11.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+                Add vehicle
+              </a>
+              <a class="btn" href="customers.html">
+                <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>
+                Add customer
+              </a>
+              <a class="btn" href="reports.html">
+                <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>
+                View reports
+              </a>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
-  </section>
-</main>
+    </main>
+  </div><!-- /.app-body -->
+
+</div><!-- /.app-shell -->
 
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 <script src="app.js"></script>
