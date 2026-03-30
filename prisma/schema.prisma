@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Credit_card {
-  credit_card_number Int        @id @default(autoincrement())
+  credit_card_number Int
   holder_name        String
   security_code      Int
   expiration_date    String
@@ -30,7 +30,7 @@ model Customer {
 }
 
 model Driver_s_License {
-  drivers_license_id Int        @id @default(autoincrement())
+  drivers_license_id Int
   holder_name        String
   expiration_date    String
   address            String
