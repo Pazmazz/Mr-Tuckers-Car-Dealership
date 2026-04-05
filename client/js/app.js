@@ -45,6 +45,27 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
+// API call to the server, allows data submitted on the website to also be saved into the prisma database
+const API = "http://localhost:3000/api";
+
+async function apiPost(endpoint, data) {
+  try {
+    const res = await fetch(`${API}/${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Server error");
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("API error:", err.message);
+    throw err;
+  }
+}
+
 /* ---- State ---- */
 
 let state = loadState();

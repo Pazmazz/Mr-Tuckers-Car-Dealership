@@ -660,7 +660,7 @@ $("#btnExportInventory") && $("#btnExportInventory").addEventListener("click", (
   downloadJson(state.vehicles, "inventory.json");
 });
 
-$("#customerForm") && $("#customerForm").addEventListener("submit", (e) => {
+$("#customerForm") && $("#customerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
     const c = {
@@ -675,6 +675,15 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", (e) => {
       creditScore: Number($("#custCredit").value)
     };
     upsertCustomer(c);
+
+    // Add form data into prisma
+    await apiPost("customers", {
+      customer_name:      `${c.first} ${c.middle ? c.middle + " " : ""}${c.last}`.trim(),
+      credit_score:       c.creditScore,
+      drivers_license_id: Number(c.license),
+      credit_card_number: 0        
+    });
+
     toast("Customer saved.");
     $("#customerForm").reset();
     $("#customerId").value = "";
