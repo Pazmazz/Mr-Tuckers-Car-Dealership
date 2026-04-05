@@ -5,7 +5,7 @@
   <script>(function(){var t=localStorage.getItem('mt_theme');if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.classList.add('notransition');})();</script>
   <style>.content{opacity:0;transform:translateY(6px)}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/styles.css" />
   <title>Customers • Mr. Tucker's DMS</title>
 </head>
 <body>
@@ -18,7 +18,9 @@
       <a class="nav-item" href="inventory.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.5l2-4h7l2 4"/><rect x="1.5" y="8.5" width="12" height="3" rx="1"/><circle cx="4" cy="11.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="11" cy="11.5" r="1.5" fill="currentColor" stroke="none"/></svg>Inventory<span class="nav-badge" id="nbInventory"></span></a>
       <a class="nav-item active" href="customers.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>Customers<span class="nav-badge" id="nbCustomers"></span></a>
       <a class="nav-item" href="transactions.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="1.5" width="9" height="12" rx="1.5"/><path d="M5.5 5h4M5.5 7.5h4M5.5 10h2.5"/></svg>Transactions<span class="nav-badge" id="nbTransactions"></span></a>
-      <a class="nav-item" href="reports.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>Reports</a><a class="nav-item" id="navAnalytics" href="analytics.html" hidden><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 13.5V8.5M5.5 13.5V5.5M9.5 13.5V3.5M13.5 13.5V1.5"/></svg>Analytics</a>
+      <a class="nav-item" href="employees.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="10.5" cy="4" r="2"/><path d="M0.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M10 8.6c2.21.47 3.5 2.3 3.5 4.4"/></svg>Employees<span class="nav-badge" id="nbEmployees"></span></a>
+      <a class="nav-item" href="reports.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>Reports</a>
+      <a class="nav-item" id="navAnalytics" href="analytics.html" hidden><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 13.5V8.5M5.5 13.5V5.5M9.5 13.5V3.5M13.5 13.5V1.5"/></svg>Analytics</a>
     </div>
     <div class="nav-section">
       <div class="nav-label">Tools</div>
@@ -46,33 +48,128 @@
 
     <main class="content">
       <div class="panel">
-        <div class="panel-header"><h1>Customers</h1><p class="muted">Manage customer records — license, address, credit, and history.</p></div>
+        <div class="panel-header"><h1>Customers</h1><p class="muted">Manage customer records — identity, driver's license, and payment info.</p></div>
         <div class="grid two">
-          <div class="card">
-            <h2>Add / Update Customer</h2>
-            <form id="customerForm" class="form">
-              <input id="customerId" type="hidden" />
-              <div class="grid three tight">
-                <label>First name<input id="custFirst" required /></label>
-                <label>Middle initial<input id="custMiddle" maxlength="1" /></label>
-                <label>Last name<input id="custLast" required /></label>
-              </div>
-              <label>Address<input id="custAddress" required placeholder="Street, City, State / Region" /></label>
-              <div class="grid two tight">
-                <label>Phone 1<input id="custPhone1" required placeholder="+1 555 123 4567" /></label>
-                <label>Phone 2 (optional)<input id="custPhone2" placeholder="+1 555 987 6543" /></label>
-              </div>
-              <div class="grid two tight">
-                <label>Driver's license #<input id="custLicense" required placeholder="DL1234567" /></label>
-                <label>Credit score (0–850)<input id="custCredit" type="number" min="0" max="850" required placeholder="720" /></label>
-              </div>
-              <div class="row">
-                <button class="btn primary" type="submit">Save customer</button>
-                <button class="btn" type="button" id="btnCustomerReset">Clear</button>
-              </div>
-              <p class="muted small">Customer must have a valid license on file to purchase.</p>
-            </form>
+
+          <!-- Left column: tabbed forms -->
+          <div style="display:flex;flex-direction:column;gap:16px">
+
+            <!-- Form tab navigation -->
+            <div class="form-tabs" id="custFormTabs">
+              <button class="form-tab active" data-panel="panelCustomer" type="button">
+                <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="margin-right:4px;vertical-align:-1px"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>Customer
+              </button>
+              <button class="form-tab" data-panel="panelLicense" type="button">
+                <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="margin-right:4px;vertical-align:-1px"><rect x="1.5" y="3" width="12" height="9" rx="1.5"/><path d="M4 6.5h3M4 9h2M9.5 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>Driver's License
+              </button>
+              <button class="form-tab" data-panel="panelCard" type="button">
+                <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="margin-right:4px;vertical-align:-1px"><rect x="1" y="3.5" width="13" height="8" rx="1.5"/><path d="M1 6.5h13"/></svg>Credit Card
+              </button>
+            </div>
+
+            <!-- Tab 1: Customer info -->
+            <div class="card form-tab-panel" id="panelCustomer">
+              <h2>Add / Update Customer</h2>
+              <form id="customerForm" class="form">
+                <input id="customerId" type="hidden" />
+                <div class="form-section-label">Identity</div>
+                <div class="grid three tight">
+                  <label>First name<input id="custFirst" required placeholder="Jane" /></label>
+                  <label>Middle initial<input id="custMiddle" maxlength="1" placeholder="M" /></label>
+                  <label>Last name<input id="custLast" required placeholder="Smith" /></label>
+                </div>
+                <div class="form-section-label">Contact</div>
+                <label>Address<input id="custAddress" required placeholder="Street, City, State / Region" /></label>
+                <div class="grid two tight">
+                  <label>Phone 1<input id="custPhone1" required placeholder="+1 555 123 4567" /></label>
+                  <label>Phone 2 (optional)<input id="custPhone2" placeholder="+1 555 987 6543" /></label>
+                </div>
+                <div class="form-section-label">Finance</div>
+                <div class="grid two tight">
+                  <label>Driver's license #<input id="custLicense" required placeholder="DL1234567" /></label>
+                  <label>Credit score (0–850)<input id="custCredit" type="number" min="0" max="850" required placeholder="720" /></label>
+                </div>
+                <div class="row" style="margin-top:4px">
+                  <button class="btn primary" type="submit">Save customer</button>
+                  <button class="btn" type="button" id="btnCustomerReset">Clear</button>
+                </div>
+                <p class="muted small">Customer must have a valid license on file to purchase.</p>
+              </form>
+            </div>
+
+            <!-- Tab 2: Driver's license -->
+            <div class="card form-tab-panel" id="panelLicense" hidden>
+              <h2>Driver's License Details</h2>
+              <form id="dlForm" class="form">
+                <input id="dlId" type="hidden" />
+                <label>Customer
+                  <select id="dlCustomer" required>
+                    <option value="">— select a customer —</option>
+                  </select>
+                </label>
+                <div class="form-section-label">Identity</div>
+                <div class="grid two tight">
+                  <label>Holder name<input id="dlHolderName" required placeholder="Jane M. Smith" /></label>
+                  <label>License number<input id="dlLicenseNo" required placeholder="DL1234567" /></label>
+                </div>
+                <div class="grid three tight">
+                  <label>Date of birth<input id="dlBirthDate" type="date" /></label>
+                  <label>Expiration date<input id="dlExpDate" type="date" required /></label>
+                  <label>Sex
+                    <select id="dlSex">
+                      <option value="">—</option>
+                      <option value="M">M</option>
+                      <option value="F">F</option>
+                      <option value="X">X</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="form-section-label">Physical</div>
+                <div class="grid two tight">
+                  <label>Eye color<input id="dlEyeColor" placeholder="Brown" /></label>
+                  <label>Weight<input id="dlWeight" placeholder="175 lbs" /></label>
+                </div>
+                <label>Address on license<input id="dlAddress" placeholder="Street, City, State" /></label>
+                <label>Restrictions<input id="dlRestrictions" placeholder="None" /></label>
+                <div class="row" style="margin-top:4px">
+                  <button class="btn primary" type="submit">Save license</button>
+                  <button class="btn" type="button" id="btnDlReset">Clear</button>
+                </div>
+              </form>
+              <div id="dlList" class="table-wrap" aria-live="polite"></div>
+            </div>
+
+            <!-- Tab 3: Credit card -->
+            <div class="card form-tab-panel" id="panelCard" hidden>
+              <h2>Credit Card</h2>
+              <form id="ccForm" class="form">
+                <input id="ccId" type="hidden" />
+                <label>Customer
+                  <select id="ccCustomer" required>
+                    <option value="">— select a customer —</option>
+                  </select>
+                </label>
+                <div class="form-section-label">Card Details</div>
+                <div class="grid two tight">
+                  <label>Name on card<input id="ccHolderName" required placeholder="Jane M. Smith" /></label>
+                  <label>Last 4 digits<input id="ccLast4" required maxlength="4" pattern="\d{4}" placeholder="4242" /></label>
+                </div>
+                <div class="grid two tight">
+                  <label>Expiration (MM/YY)<input id="ccExpDate" required placeholder="12/28" /></label>
+                  <label>Billing zip code<input id="ccZip" required placeholder="10001" /></label>
+                </div>
+                <div class="row" style="margin-top:4px">
+                  <button class="btn primary" type="submit">Save card</button>
+                  <button class="btn" type="button" id="btnCcReset">Clear</button>
+                </div>
+                <p class="muted small">Only the last 4 digits are stored for security.</p>
+              </form>
+              <div id="ccList" class="table-wrap" aria-live="polite"></div>
+            </div>
+
           </div>
+
+          <!-- Right column: customer list -->
           <div class="card">
             <h2>Customer List</h2>
             <div class="row">
@@ -81,12 +178,13 @@
             </div>
             <div id="customerList" class="table-wrap" aria-live="polite"></div>
           </div>
+
         </div>
       </div>
     </main>
   </div>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-<script src="app.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

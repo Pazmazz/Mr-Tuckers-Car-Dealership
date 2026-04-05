@@ -58,7 +58,10 @@ function loadState() {
       customers: [],
       transactions: [],
       invoices: {},
-      settings: { discountRule: { ...DEFAULT_DISCOUNT_RULE } }
+      settings: { discountRule: { ...DEFAULT_DISCOUNT_RULE } },
+      employees: [],
+      driverLicenses: [],
+      creditCards: []
     };
   }
   return {
@@ -67,7 +70,10 @@ function loadState() {
     customers: Array.isArray(parsed.customers) ? parsed.customers : [],
     transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
     invoices: parsed.invoices ?? {},
-    settings: parsed.settings ?? { discountRule: { ...DEFAULT_DISCOUNT_RULE } }
+    settings: parsed.settings ?? { discountRule: { ...DEFAULT_DISCOUNT_RULE } },
+    employees: Array.isArray(parsed.employees) ? parsed.employees : [],
+    driverLicenses: Array.isArray(parsed.driverLicenses) ? parsed.driverLicenses : [],
+    creditCards: Array.isArray(parsed.creditCards) ? parsed.creditCards : []
   };
 }
 
@@ -172,6 +178,67 @@ function upsertCustomer(customer) {
 
 function deleteCustomer(license) {
   state.customers = state.customers.filter(c => c.license !== license);
+  saveState();
+}
+
+/* ---- Employee operations ---- */
+
+function upsertEmployee(emp) {
+  if (!emp.name || !emp.name.trim()) throw new Error("Employee name is required.");
+  if (!emp.username || !emp.username.trim()) throw new Error("Username is required.");
+  const id = emp.id || uid("emp");
+  const record = {
+    ...emp,
+    id,
+    name: emp.name.trim(),
+    username: emp.username.trim(),
+    initials: emp.name.trim().split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+    online: emp.online ?? false
+  };
+  const idx = state.employees.findIndex(e => e.id === id);
+  if (idx >= 0) state.employees[idx] = record;
+  else state.employees.push(record);
+  saveState();
+}
+
+function deleteEmployee(id) {
+  state.employees = state.employees.filter(e => e.id !== id);
+  saveState();
+}
+
+/* ---- Driver's license operations ---- */
+
+function upsertDriverLicense(dl) {
+  if (!dl.licenseNo || !dl.licenseNo.trim()) throw new Error("License number is required.");
+  if (!dl.customerId) throw new Error("Customer is required.");
+  const id = dl.id || uid("dl");
+  const record = { ...dl, id, licenseNo: dl.licenseNo.trim() };
+  const idx = state.driverLicenses.findIndex(d => d.id === id);
+  if (idx >= 0) state.driverLicenses[idx] = record;
+  else state.driverLicenses.push(record);
+  saveState();
+}
+
+function deleteDriverLicense(id) {
+  state.driverLicenses = state.driverLicenses.filter(d => d.id !== id);
+  saveState();
+}
+
+/* ---- Credit card operations ---- */
+
+function upsertCreditCard(cc) {
+  if (!cc.last4 || cc.last4.trim().length !== 4) throw new Error("Last 4 digits are required.");
+  if (!cc.customerId) throw new Error("Customer is required.");
+  const id = cc.id || uid("cc");
+  const record = { ...cc, id, last4: cc.last4.trim() };
+  const idx = state.creditCards.findIndex(c => c.id === id);
+  if (idx >= 0) state.creditCards[idx] = record;
+  else state.creditCards.push(record);
+  saveState();
+}
+
+function deleteCreditCard(id) {
+  state.creditCards = state.creditCards.filter(c => c.id !== id);
   saveState();
 }
 
@@ -587,9 +654,11 @@ function updateNavBadges() {
   const nbInv = $("#nbInventory");
   const nbCust = $("#nbCustomers");
   const nbTx = $("#nbTransactions");
+  const nbEmp = $("#nbEmployees");
   if (nbInv) nbInv.textContent = state.vehicles.length || "";
   if (nbCust) nbCust.textContent = state.customers.length || "";
   if (nbTx) nbTx.textContent = state.transactions.length || "";
+  if (nbEmp) nbEmp.textContent = (MOCK_EMPLOYEES.length + state.employees.length) || "";
 }
 
 function renderSettings() {
@@ -600,27 +669,9 @@ function renderSettings() {
 }
 
 function renderUtilities() {
-  const wrap = $("#employeesTable");
-  if (!wrap) return;
-
-  const employees = MOCK_EMPLOYEES;
-  wrap.innerHTML = `
-    <table aria-label="Employees">
-      <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
-      <tbody>
-        ${employees.map(e => `
-          <tr>
-            <td>${escapeHtml(e.name)}</td>
-            <td>${escapeHtml(e.role)}</td>
-            <td><span class="badge ${e.online ? "ok" : "subtle"}">${e.online ? "Online" : "Offline"}</span></td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  `;
-
   const darkToggle = $("#utilDarkToggle");
-  if (darkToggle) {
+  if (darkToggle && !darkToggle._wired) {
+    darkToggle._wired = true;
     darkToggle.checked = document.documentElement.classList.contains("dark");
     darkToggle.addEventListener("change", () => {
       const isDark = darkToggle.checked;
@@ -631,6 +682,118 @@ function renderUtilities() {
   }
 }
 
+function renderEmployeesPage() {
+  const allEmployees = [
+    ...MOCK_EMPLOYEES.map(e => ({ ...e, isMock: true })),
+    ...state.employees.map(e => ({ ...e, isMock: false }))
+  ];
+
+  const totalEl = $("#empStatTotal");
+  const onlineEl = $("#empStatOnline");
+  const managersEl = $("#empStatManagers");
+  if (totalEl) totalEl.textContent = String(allEmployees.length);
+  if (onlineEl) onlineEl.textContent = String(allEmployees.filter(e => e.online).length);
+  if (managersEl) managersEl.textContent = String(allEmployees.filter(e => e.role === "manager").length);
+
+  const wrap = $("#employeesTable");
+  if (!wrap) return;
+
+  wrap.innerHTML = `
+    <table aria-label="Employees">
+      <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${allEmployees.map(e => `
+          <tr>
+            <td><span class="emp-row-avatar">${escapeHtml(e.initials || e.name.slice(0,2).toUpperCase())}</span>${escapeHtml(e.name)}</td>
+            <td class="mono">${escapeHtml(e.username || "—")}</td>
+            <td>${escapeHtml(e.role)}</td>
+            <td>${escapeHtml(e.department || "—")}</td>
+            <td><span class="badge ${e.online ? "ok" : "subtle"}">${e.online ? "Online" : "Offline"}</span></td>
+            <td>${e.isMock
+              ? `<span class="muted small">Demo</span>`
+              : `<button class="btn" data-act="editEmp" data-id="${escapeAttr(e.id)}" type="button">Edit</button>
+                 <button class="btn" data-act="delEmp" data-id="${escapeAttr(e.id)}" type="button">Remove</button>`
+            }</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function refreshCustomerFormSelects() {
+  ["dlCustomer", "ccCustomer"].forEach(selId => {
+    const sel = $("#" + selId);
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = `<option value="">— select a customer —</option>` +
+      state.customers.map(c =>
+        `<option value="${escapeAttr(c.id)}">${escapeHtml(c.first)} ${escapeHtml(c.last)} — ${escapeHtml(c.license)}</option>`
+      ).join("");
+    if (prev) sel.value = prev;
+  });
+}
+
+function renderDriverLicenseList() {
+  const wrap = $("#dlList");
+  if (!wrap) return;
+  if (!state.driverLicenses.length) {
+    wrap.innerHTML = `<div class="muted small" style="padding:12px 0">No driver's licenses on file.</div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <table aria-label="Driver's Licenses">
+      <thead>
+        <tr><th>Holder</th><th>License #</th><th>DOB</th><th>Expires</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        ${state.driverLicenses.map(dl => `
+          <tr>
+            <td>${escapeHtml(dl.holderName)}</td>
+            <td class="mono">${escapeHtml(dl.licenseNo)}</td>
+            <td>${escapeHtml(dl.birthDate || "—")}</td>
+            <td>${escapeHtml(dl.expirationDate || "—")}</td>
+            <td>
+              <button class="btn" data-act="editDl" data-id="${escapeAttr(dl.id)}" type="button">Edit</button>
+              <button class="btn" data-act="delDl" data-id="${escapeAttr(dl.id)}" type="button">Delete</button>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderCreditCardList() {
+  const wrap = $("#ccList");
+  if (!wrap) return;
+  if (!state.creditCards.length) {
+    wrap.innerHTML = `<div class="muted small" style="padding:12px 0">No credit cards on file.</div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <table aria-label="Credit Cards">
+      <thead>
+        <tr><th>Holder</th><th>Card</th><th>Expires</th><th>Zip</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        ${state.creditCards.map(cc => `
+          <tr>
+            <td>${escapeHtml(cc.holderName)}</td>
+            <td class="mono">•••• •••• •••• ${escapeHtml(cc.last4)}</td>
+            <td class="mono">${escapeHtml(cc.expirationDate)}</td>
+            <td>${escapeHtml(cc.zipCode)}</td>
+            <td>
+              <button class="btn" data-act="editCc" data-id="${escapeAttr(cc.id)}" type="button">Edit</button>
+              <button class="btn" data-act="delCc" data-id="${escapeAttr(cc.id)}" type="button">Delete</button>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
 function rerenderAll() {
   setSessionBadge();
   renderPeopleOnline();
@@ -639,11 +802,15 @@ function rerenderAll() {
   renderInventory();
   renderCustomers();
   refreshTransactionSelects();
+  refreshCustomerFormSelects();
   renderTransactions();
   renderReports();
   renderSearch();
   renderSettings();
   renderUtilities();
+  renderEmployeesPage();
+  renderDriverLicenseList();
+  renderCreditCardList();
 }
 
 /* ---- Wiring ---- */
@@ -1109,6 +1276,220 @@ function renderDcQuotes() {
     inp.dataset.lastQuery = q;
     renderSearch();
   }
+})();
+
+/* ---- Employee form ---- */
+
+$("#employeeForm") && $("#employeeForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  try {
+    const emp = {
+      id: $("#employeeId").value || undefined,
+      name: $("#empName").value.trim(),
+      username: $("#empUsername").value.trim(),
+      role: $("#empRole").value,
+      department: $("#empDepartment").value.trim()
+    };
+    upsertEmployee(emp);
+    toast("Employee registered.");
+    $("#employeeForm").reset();
+    $("#employeeId").value = "";
+    rerenderAll();
+  } catch (err) {
+    toast(err.message || "Failed to register employee.");
+  }
+});
+
+$("#btnEmpReset") && $("#btnEmpReset").addEventListener("click", () => {
+  $("#employeeForm") && $("#employeeForm").reset();
+  if ($("#employeeId")) $("#employeeId").value = "";
+});
+
+$("#employeesTable") && $("#employeesTable").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id  = btn.dataset.id;
+
+  if (act === "editEmp") {
+    const emp = state.employees.find(x => x.id === id);
+    if (!emp) return;
+    if ($("#employeeId")) $("#employeeId").value = emp.id;
+    if ($("#empName"))     $("#empName").value = emp.name;
+    if ($("#empUsername")) $("#empUsername").value = emp.username;
+    if ($("#empRole"))     $("#empRole").value = emp.role;
+    if ($("#empDepartment")) $("#empDepartment").value = emp.department || "";
+    toast("Editing employee.");
+  }
+
+  if (act === "delEmp") {
+    deleteEmployee(id);
+    toast("Employee removed.");
+    rerenderAll();
+  }
+});
+
+/* ---- Driver's license form ---- */
+
+$("#dlForm") && $("#dlForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  try {
+    const dl = {
+      id: $("#dlId").value || undefined,
+      customerId: $("#dlCustomer").value,
+      holderName: $("#dlHolderName").value.trim(),
+      licenseNo: $("#dlLicenseNo").value.trim(),
+      birthDate: $("#dlBirthDate").value,
+      expirationDate: $("#dlExpDate").value,
+      sex: $("#dlSex").value,
+      eyeColor: $("#dlEyeColor").value.trim(),
+      weight: $("#dlWeight").value.trim(),
+      address: $("#dlAddress").value.trim(),
+      restrictions: $("#dlRestrictions").value.trim()
+    };
+    upsertDriverLicense(dl);
+    toast("Driver's license saved.");
+    $("#dlForm").reset();
+    $("#dlId").value = "";
+    rerenderAll();
+  } catch (err) {
+    toast(err.message || "Failed to save license.");
+  }
+});
+
+$("#btnDlReset") && $("#btnDlReset").addEventListener("click", () => {
+  $("#dlForm") && $("#dlForm").reset();
+  if ($("#dlId")) $("#dlId").value = "";
+});
+
+$("#dlList") && $("#dlList").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id  = btn.dataset.id;
+
+  if (act === "editDl") {
+    const dl = state.driverLicenses.find(x => x.id === id);
+    if (!dl) return;
+    if ($("#dlId"))          $("#dlId").value = dl.id;
+    if ($("#dlCustomer"))    $("#dlCustomer").value = dl.customerId;
+    if ($("#dlHolderName"))  $("#dlHolderName").value = dl.holderName;
+    if ($("#dlLicenseNo"))   $("#dlLicenseNo").value = dl.licenseNo;
+    if ($("#dlBirthDate"))   $("#dlBirthDate").value = dl.birthDate || "";
+    if ($("#dlExpDate"))     $("#dlExpDate").value = dl.expirationDate || "";
+    if ($("#dlSex"))         $("#dlSex").value = dl.sex || "";
+    if ($("#dlEyeColor"))    $("#dlEyeColor").value = dl.eyeColor || "";
+    if ($("#dlWeight"))      $("#dlWeight").value = dl.weight || "";
+    if ($("#dlAddress"))     $("#dlAddress").value = dl.address || "";
+    if ($("#dlRestrictions")) $("#dlRestrictions").value = dl.restrictions || "";
+    toast("Editing license.");
+  }
+
+  if (act === "delDl") {
+    deleteDriverLicense(id);
+    toast("License deleted.");
+    rerenderAll();
+  }
+});
+
+/* ---- Credit card form ---- */
+
+$("#ccForm") && $("#ccForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  try {
+    const cc = {
+      id: $("#ccId").value || undefined,
+      customerId: $("#ccCustomer").value,
+      holderName: $("#ccHolderName").value.trim(),
+      last4: $("#ccLast4").value.trim(),
+      expirationDate: $("#ccExpDate").value.trim(),
+      zipCode: $("#ccZip").value.trim()
+    };
+    upsertCreditCard(cc);
+    toast("Credit card saved.");
+    $("#ccForm").reset();
+    $("#ccId").value = "";
+    rerenderAll();
+  } catch (err) {
+    toast(err.message || "Failed to save card.");
+  }
+});
+
+$("#btnCcReset") && $("#btnCcReset").addEventListener("click", () => {
+  $("#ccForm") && $("#ccForm").reset();
+  if ($("#ccId")) $("#ccId").value = "";
+});
+
+$("#ccList") && $("#ccList").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id  = btn.dataset.id;
+
+  if (act === "editCc") {
+    const cc = state.creditCards.find(x => x.id === id);
+    if (!cc) return;
+    if ($("#ccId"))         $("#ccId").value = cc.id;
+    if ($("#ccCustomer"))   $("#ccCustomer").value = cc.customerId;
+    if ($("#ccHolderName")) $("#ccHolderName").value = cc.holderName;
+    if ($("#ccLast4"))      $("#ccLast4").value = cc.last4;
+    if ($("#ccExpDate"))    $("#ccExpDate").value = cc.expirationDate;
+    if ($("#ccZip"))        $("#ccZip").value = cc.zipCode;
+    toast("Editing card.");
+  }
+
+  if (act === "delCc") {
+    deleteCreditCard(id);
+    toast("Card deleted.");
+    rerenderAll();
+  }
+});
+
+/* ---- Customer-page form tabs ---- */
+(function initCustomerFormTabs() {
+  const tabsNav = $("#custFormTabs");
+  if (!tabsNav) return;
+
+  tabsNav.addEventListener("click", (e) => {
+    const tab = e.target.closest(".form-tab");
+    if (!tab) return;
+
+    tabsNav.querySelectorAll(".form-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+
+    ["panelCustomer", "panelLicense", "panelCard"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.hidden = (id !== tab.dataset.panel);
+    });
+  });
+})();
+
+/* ---- DL form: auto-fill from selected customer ---- */
+(function initDlCustomerLink() {
+  const sel = $("#dlCustomer");
+  if (!sel) return;
+  sel.addEventListener("change", () => {
+    const cust = state.customers.find(c => c.id === sel.value);
+    if (!cust) return;
+    const holderEl = $("#dlHolderName");
+    const licEl    = $("#dlLicenseNo");
+    const addrEl   = $("#dlAddress");
+    if (holderEl && !holderEl.value) holderEl.value = `${cust.first} ${cust.last}`.trim();
+    if (licEl    && !licEl.value)    licEl.value    = cust.license;
+    if (addrEl   && !addrEl.value)   addrEl.value   = cust.address || "";
+  });
+})();
+
+/* ---- CC form: auto-fill holder name from selected customer ---- */
+(function initCcCustomerLink() {
+  const sel = $("#ccCustomer");
+  if (!sel) return;
+  sel.addEventListener("change", () => {
+    const cust = state.customers.find(c => c.id === sel.value);
+    if (!cust) return;
+    const holderEl = $("#ccHolderName");
+    if (holderEl && !holderEl.value) holderEl.value = `${cust.first} ${cust.last}`.trim();
+  });
 })();
 
 $("#btnResetAll") && $("#btnResetAll").addEventListener("click", () => {
