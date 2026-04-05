@@ -34,6 +34,7 @@ async function main() {
   // Create a credit card
   const card = await prisma.credit_card.create({
     data: {
+      credit_card_number: 123456789012,
       holder_name: "Dio Brando",
       security_code: 679,
       expiration_date: "04-04-28",
@@ -44,6 +45,7 @@ async function main() {
   // Create a driver's license
   const license = await prisma.driver_s_License.create({
     data: {
+      drivers_license_id: 653291749,
       holder_name: "Dio Brando",
       expiration_date: "04-04-28",
       address: "43 Heaven Drive London, England",
