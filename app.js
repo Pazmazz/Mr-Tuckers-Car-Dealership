@@ -676,14 +676,6 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
     };
     upsertCustomer(c);
 
-    // Add form data into prisma
-    await apiPost("customers", {
-      customer_name:      `${c.first} ${c.middle ? c.middle + " " : ""}${c.last}`.trim(),
-      credit_score:       c.creditScore,
-      drivers_license_id: Number(c.license),
-      credit_card_number: 0        
-    });
-
     toast("Customer saved.");
     $("#customerForm").reset();
     $("#customerId").value = "";
