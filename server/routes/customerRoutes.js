@@ -68,18 +68,18 @@ router.put('/:id', async (req, res) => {
     try {
         const { customer_name, credit_score, drivers_license_id, credit_card_number } = req.body;
         const customer = await prisma.customer.update({
-        where: { customer_id: Number(req.params.id) },
-        data: {
-            ...(customer_name    !== undefined && { customer_name }),
-            ...(credit_score     !== undefined && { credit_score }),
-            ...(drivers_license_id !== undefined && { drivers_license_id }),
-            ...(credit_card_number !== undefined && { credit_card_number }),
-        },
-        include: {
-            Driver_s_License: true,
-            Credit_card: true,
-            Transactions: true,
-        },
+            where: { customer_id: Number(req.params.id) },
+            data: {
+                ...(customer_name    !== undefined && { customer_name }),
+                ...(credit_score     !== undefined && { credit_score }),
+                ...(drivers_license_id !== undefined && { drivers_license_id }),
+                ...(credit_card_number !== undefined && { credit_card_number }),
+            },
+            include: {
+                Driver_s_License: true,
+                Credit_card: true,
+                Transactions: true,
+            },
         });
         res.json(customer);
     } catch (error) {

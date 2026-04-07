@@ -66,18 +66,17 @@ async function apiPost(endpoint, data) {
   }
 }
 
-async function apiDelete(endpoint, data) {
+async function apiDelete(endpoint) {
   try {
     const res = await fetch(`${API}/${endpoint}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      method: "DELETE"
     });
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.error || "Server error");
     }
-    return await res.json();
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
   } catch (err) {
     console.error("API error:", err.message);
     throw err;
@@ -996,7 +995,7 @@ $("#btnCustomerReset") && $("#btnCustomerReset").addEventListener("click", () =>
 
 $("#customerFilter") && $("#customerFilter").addEventListener("input", renderCustomers);
 
-$("#customerList") && $("#customerList").addEventListener("click", (e) => {
+$("#customerList") && $("#customerList").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
 
@@ -1020,6 +1019,10 @@ $("#customerList") && $("#customerList").addEventListener("click", (e) => {
 
   if (act === "delCustomer") {
     deleteCustomer(license);
+
+    // Delete form data from prisma
+    await apiDelete(`customers/${customerId}`);
+
     toast("Customer deleted.");
     rerenderAll();
   }
@@ -1442,7 +1445,7 @@ $("#dlList") && $("#dlList").addEventListener("click", (e) => {
 
 /* ---- Credit card form ---- */
 
-$("#ccForm") && $("#ccForm").addEventListener("submit", (e) => {
+$("#ccForm") && $("#ccForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
     const cc = {
@@ -1454,6 +1457,15 @@ $("#ccForm") && $("#ccForm").addEventListener("submit", (e) => {
       zipCode: $("#ccZip").value.trim()
     };
     upsertCreditCard(cc);
+
+    await apiPost("credit_cards", {
+      credit_card_number: customerId,
+      holder_name : holderName,
+      security_code: last4,
+      expiration_date: expirationDate,
+      zip_code: zipCode
+    })
+
     toast("Credit card saved.");
     $("#ccForm").reset();
     $("#ccId").value = "";

@@ -10,9 +10,11 @@ app.use(express.json());
 
 const vehicleRoutes = require("./routes/vehicleRoutes");
 const customerRoutes = require("./routes/customerRoutes");
+const creditcardRoutes = require("./routes/creditcardRoutes");
 
-app.use("/vehicleRoutes", vehicleRoutes);
-app.use("/customerRoutes", customerRoutes);
+app.use("/api/vehicles", vehicleRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/creditcard", creditcardRoutes)
 
 app.get("/", (req, res) => {
   res.send("Car Dealership API Running");
