@@ -6,7 +6,7 @@
   <style>.content{opacity:0;transform:translateY(6px)}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="css/styles.css" />
-  <title>Customers • Mr. Tucker's DMS</title>
+  <title>Register Employee • Mr. Tucker's DMS</title>
 </head>
 <body>
 <div class="app-shell">
@@ -16,9 +16,9 @@
       <div class="nav-label">Main</div>
       <a class="nav-item" href="dashboard.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="1" width="5.5" height="5.5" rx="1"/><rect x="1" y="8.5" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1"/></svg>Dashboard</a>
       <a class="nav-item" href="inventory.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.5l2-4h7l2 4"/><rect x="1.5" y="8.5" width="12" height="3" rx="1"/><circle cx="4" cy="11.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="11" cy="11.5" r="1.5" fill="currentColor" stroke="none"/></svg>Inventory<span class="nav-badge" id="nbInventory"></span></a>
-      <a class="nav-item active" href="customers.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>Customers<span class="nav-badge" id="nbCustomers"></span></a>
+      <a class="nav-item" href="customers.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>Customers<span class="nav-badge" id="nbCustomers"></span></a>
       <a class="nav-item" href="transactions.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="1.5" width="9" height="12" rx="1.5"/><path d="M5.5 5h4M5.5 7.5h4M5.5 10h2.5"/></svg>Transactions<span class="nav-badge" id="nbTransactions"></span></a>
-      <a class="nav-item" href="employees.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="10.5" cy="4" r="2"/><path d="M0.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M10 8.6c2.21.47 3.5 2.3 3.5 4.4"/></svg>Employees<span class="nav-badge" id="nbEmployees"></span></a>
+      <a class="nav-item active" href="employees.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="10.5" cy="4" r="2"/><path d="M0.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M10 8.6c2.21.47 3.5 2.3 3.5 4.4"/></svg>Employees<span class="nav-badge" id="nbEmployees"></span></a>
       <a class="nav-item" href="reports.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>Reports</a>
       <a class="nav-item" id="navAnalytics" href="analytics.html" hidden><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 13.5V8.5M5.5 13.5V5.5M9.5 13.5V3.5M13.5 13.5V1.5"/></svg>Analytics</a>
     </div>
@@ -44,79 +44,97 @@
     <header class="topbar">
       <div class="topbar-search"><svg class="topbar-search-icon" width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg><input class="topbar-search-input" id="topbarSearchInput" type="search" placeholder="Search anything…" autocomplete="off" /></div>
       <div class="topbar-spacer"></div>
-      <button class="btn-filter" type="button"><svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h11M4 8h7M6 12h3"/></svg>Sort by</button>
-      <button class="btn-filter" type="button"><svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 3h12M4 7.5h7M6.5 12h2"/></svg>Filters</button>
       <div class="topbar-profile-chip" id="topbarProfile"><div class="topbar-avatar" id="topbarAvatarEl">?</div><div><div class="topbar-profile-name" id="topbarUsername">Me</div><div class="topbar-profile-role" id="topbarRole">Guest</div></div></div>
       <button id="btnTheme" class="btn-icon" type="button" aria-label="Toggle theme"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 7.5a5.5 5.5 0 0 0 9.9 3.28A5.5 5.5 0 0 1 6.22 1.1 5.5 5.5 0 0 0 2 7.5z"/></svg></button>
       <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
-      <button class="btn primary sm" onclick="document.getElementById('custFirst').focus()">+ Add customer</button>
     </header>
 
     <main class="content">
       <div class="page-hero hero-green">
-        <div class="page-hero-tag">Main</div>
-        <h1>Customers</h1>
-        <p>Manage customer profiles. Add driver's licenses and payment cards via the Records section.</p>
+        <div class="page-hero-tag">Employees</div>
+        <h1>Register Employee</h1>
+        <p>Add a new team member or update an existing staff record.</p>
       </div>
 
       <div class="panel">
+
+        <div style="margin-bottom:16px">
+          <a class="btn" href="employees.html">
+            <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 2L2 7.5 8 13M2 7.5h11"/></svg>
+            Back to Employees
+          </a>
+        </div>
+
         <div class="grid two">
 
           <div class="card accent-border">
-            <h2>Add / Update Customer</h2>
-            <form id="customerForm" class="form">
-              <input id="customerId" type="hidden" />
+            <h2>Employee Details</h2>
+            <p class="muted small" style="margin-bottom:14px">Fill in the fields below to register or update a team member.</p>
+            <form id="employeeForm" class="form">
+              <input id="employeeId" type="hidden" />
               <div class="form-section-label">Identity</div>
-              <div class="grid three tight">
-                <label>First name<input id="custFirst" required placeholder="Jane" /></label>
-                <label>Middle initial<input id="custMiddle" maxlength="1" placeholder="M" /></label>
-                <label>Last name<input id="custLast" required placeholder="Smith" /></label>
-              </div>
-              <div class="form-section-label">Contact</div>
-              <label>Address<input id="custAddress" required placeholder="Street, City, State / Region" /></label>
               <div class="grid two tight">
-                <label>Phone 1<input id="custPhone1" required placeholder="+1 555 123 4567" /></label>
-                <label>Phone 2 (optional)<input id="custPhone2" placeholder="+1 555 987 6543" /></label>
+                <label>Full name<input id="empName" required placeholder="Jane Smith" /></label>
+                <label>Username<input id="empUsername" required placeholder="jane_smith" /></label>
               </div>
-              <div class="form-section-label">Finance</div>
+              <div class="form-section-label">Role &amp; Department</div>
               <div class="grid two tight">
-                <label>Driver's license #<input id="custLicense" required placeholder="DL1234567" /></label>
-                <label>Credit score (0–850)<input id="custCredit" type="number" min="0" max="850" required placeholder="720" /></label>
+                <label>Role
+                  <select id="empRole" required>
+                    <option value="salesperson">Salesperson</option>
+                    <option value="manager">Manager</option>
+                    <option value="finance">Finance</option>
+                    <option value="service">Service</option>
+                  </select>
+                </label>
+                <label>Department<input id="empDepartment" placeholder="Sales" /></label>
               </div>
               <div class="row" style="margin-top:4px">
-                <button class="btn primary" type="submit">Save customer</button>
-                <button class="btn" type="button" id="btnCustomerReset">Clear</button>
+                <button class="btn primary" type="submit">
+                  <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="10.5" cy="4" r="2"/><path d="M0.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M10 8.6c2.21.47 3.5 2.3 3.5 4.4"/></svg>
+                  Save Employee
+                </button>
+                <button class="btn" type="button" id="btnEmpReset">Clear</button>
               </div>
-              <p class="muted small">Customer must have a valid license on file to purchase.</p>
             </form>
           </div>
 
           <div class="card">
-            <h2>Customer List</h2>
-            <div class="row">
-              <div class="input-wrap grow"><svg class="input-icon" width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg><input id="customerFilter" placeholder="Filter by name, license, or phone…" /></div>
-              <button class="btn" id="btnExportCustomers" type="button">Export JSON</button>
+            <h2>Role Reference</h2>
+            <p class="muted small" style="margin-bottom:16px">Choose the role that best matches this team member's responsibilities.</p>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Salesperson</div>
+                  <div class="muted small">Handles vehicle sales and customer relationships. Tracked in commission reports.</div>
+                </div>
+                <span class="badge">Sales</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Manager</div>
+                  <div class="muted small">Full system access including Analytics and staff management.</div>
+                </div>
+                <span class="badge" style="background:var(--ok-soft);color:var(--ok);border-color:rgba(21,128,61,0.22)">Admin</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Finance</div>
+                  <div class="muted small">Manages payment processing and customer credit evaluations.</div>
+                </div>
+                <span class="badge" style="background:var(--warn-soft);color:var(--warn);border-color:rgba(180,83,9,0.22)">Finance</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Service</div>
+                  <div class="muted small">Handles vehicle servicing, maintenance, and trade-in assessments.</div>
+                </div>
+                <span class="badge">Service</span>
+              </div>
             </div>
-            <div id="customerList" class="table-wrap" aria-live="polite"></div>
           </div>
 
         </div>
-
-        <div class="card" style="margin-top:20px">
-          <h2>Related Records</h2>
-          <p class="muted small" style="margin-bottom:16px">Manage driver's licenses and payment cards linked to customer profiles.</p>
-          <div class="row">
-            <a class="btn" href="driver-license.html">
-              <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="3" width="12" height="9" rx="1.5"/><path d="M4 6.5h3M4 9h2M9.5 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>
-              Manage Driver Licenses
-            </a>
-            <a class="btn" href="credit-card.html">
-              <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1" y="3.5" width="13" height="8" rx="1.5"/><path d="M1 6.5h13"/></svg>
-              Manage Credit Cards
-            </a>
-          </div>
-        </div>
-
       </div>
     </main>
   </div>

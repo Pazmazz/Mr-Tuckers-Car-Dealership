@@ -23,7 +23,13 @@
       <a class="nav-item" id="navAnalytics" href="analytics.html" hidden><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 13.5V8.5M5.5 13.5V5.5M9.5 13.5V3.5M13.5 13.5V1.5"/></svg>Analytics</a>
     </div>
     <div class="nav-section">
+      <div class="nav-label">Records</div>
+      <a class="nav-item" href="driver-license.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="3" width="12" height="9" rx="1.5"/><path d="M4 6.5h3M4 9h2M9.5 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>Driver Licenses</a>
+      <a class="nav-item" href="credit-card.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1" y="3.5" width="13" height="8" rx="1.5"/><path d="M1 6.5h13"/></svg>Credit Cards</a>
+    </div>
+    <div class="nav-section">
       <div class="nav-label">Tools</div>
+      <a class="nav-item" href="commission.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 12l9-9M5 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM10 9a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>Commission</a>
       <a class="nav-item" href="search.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg>Search</a>
       <a class="nav-item" href="settings.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M7.5 1l1.2 3.6 3.8-.4-2.4 2.9 1.2 3.6-3.8-1.8-3.8 1.8 1.2-3.6L2.5 4.2l3.8.4z"/></svg>Discount Calc</a>
       <a class="nav-item" href="utilities.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 7.5h10M7.5 2.5v10M4.5 4.5l6 6M10.5 4.5l-6 6"/></svg>Utilities</a>
@@ -38,19 +44,21 @@
     <header class="topbar">
       <div class="topbar-search"><svg class="topbar-search-icon" width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg><input class="topbar-search-input" id="topbarSearchInput" type="search" placeholder="Search anything…" autocomplete="off" /></div>
       <div class="topbar-spacer"></div>
-      <button class="btn-filter" type="button"><svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h11M4 8h7M6 12h3"/></svg>Sort by</button>
-      <button class="btn-filter" type="button"><svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 3h12M4 7.5h7M6.5 12h2"/></svg>Filters</button>
       <div class="topbar-profile-chip" id="topbarProfile"><div class="topbar-avatar" id="topbarAvatarEl">?</div><div><div class="topbar-profile-name" id="topbarUsername">Me</div><div class="topbar-profile-role" id="topbarRole">Guest</div></div></div>
       <button id="btnTheme" class="btn-icon" type="button" aria-label="Toggle theme"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 7.5a5.5 5.5 0 0 0 9.9 3.28A5.5 5.5 0 0 1 6.22 1.1 5.5 5.5 0 0 0 2 7.5z"/></svg></button>
       <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
-      <button class="btn primary sm" onclick="document.getElementById('empName').focus()">+ Register employee</button>
+      <a class="btn primary sm" href="register-employee.html">+ Register employee</a>
     </header>
 
     <main class="content">
-      <div class="panel">
-        <div class="panel-header"><h1>Employees</h1><p class="muted">Manage your dealership team — register, update, and track staff.</p></div>
+      <div class="page-hero">
+        <div class="page-hero-tag">Main</div>
+        <h1>Employees</h1>
+        <p>Your dealership team at a glance — track staff, roles, and activity.</p>
+      </div>
 
-        <!-- Stat row -->
+      <div class="panel">
+
         <div class="grid three">
           <div class="stat-card card">
             <div class="stat-card-header">
@@ -84,46 +92,34 @@
           </div>
         </div>
 
-        <div class="grid two">
-
-          <!-- Register employee form -->
-          <div class="card accent-border">
-            <h2>Register Employee</h2>
-            <p class="muted small" style="margin-bottom:14px">Add a new team member or update an existing one.</p>
-            <form id="employeeForm" class="form">
-              <input id="employeeId" type="hidden" />
-              <div class="form-section-label">Identity</div>
-              <div class="grid two tight">
-                <label>Full name<input id="empName" required placeholder="Jane Smith" /></label>
-                <label>Username<input id="empUsername" required placeholder="jane_smith" /></label>
-              </div>
-              <div class="form-section-label">Role</div>
-              <div class="grid two tight">
-                <label>Role
-                  <select id="empRole" required>
-                    <option value="salesperson">Salesperson</option>
-                    <option value="manager">Manager</option>
-                    <option value="finance">Finance</option>
-                    <option value="service">Service</option>
-                  </select>
-                </label>
-                <label>Department<input id="empDepartment" placeholder="Sales" /></label>
-              </div>
-              <div class="row" style="margin-top:4px">
-                <button class="btn primary" type="submit">Register Employee</button>
-                <button class="btn" type="button" id="btnEmpReset">Clear</button>
-              </div>
-            </form>
+        <div class="card" style="margin-top:0">
+          <div class="row" style="margin-bottom:12px">
+            <h2 style="margin:0;flex:1">Team Directory</h2>
+            <a class="btn primary sm" href="register-employee.html">+ Register employee</a>
           </div>
-
-          <!-- Employee table -->
-          <div class="card">
-            <h2>Team / Employees</h2>
-            <p class="muted small" style="margin-bottom:12px">All employees on file, including demo placeholders.</p>
-            <div id="employeesTable" class="table-wrap"></div>
-          </div>
-
+          <p class="muted small" style="margin-bottom:12px">All employees on file, including demo placeholders. Click Edit to update a record.</p>
+          <div id="employeesTable" class="table-wrap"></div>
         </div>
+
+        <div class="card" style="margin-top:20px">
+          <h2>Quick Actions</h2>
+          <p class="muted small" style="margin-bottom:16px">Related pages for employee and performance management.</p>
+          <div class="row">
+            <a class="btn primary" href="register-employee.html">
+              <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="10.5" cy="4" r="2"/><path d="M0.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M10 8.6c2.21.47 3.5 2.3 3.5 4.4"/></svg>
+              Register New Employee
+            </a>
+            <a class="btn" href="commission.html">
+              <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 12l9-9M5 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM10 9a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+              Commission Calculator
+            </a>
+            <a class="btn" href="reports.html">
+              <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>
+              Sales Reports
+            </a>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>

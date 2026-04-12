@@ -1373,3 +1373,129 @@ html.dark .cc-chip {
 }
 .cc-chip-number { font-size: 15px; font-weight: 500; letter-spacing: 0.12em; }
 .cc-chip-meta   { font-size: 10px; color: rgba(255,255,255,0.72); margin-top: 1px; }
+
+/* =====================================================
+   Color splash overrides
+===================================================== */
+
+/* Sidebar: accent gradient at top for visual warmth */
+.sidebar {
+  background: linear-gradient(
+    175deg,
+    color-mix(in srgb, var(--accent) 8%, var(--surface)) 0%,
+    var(--surface) 48%
+  );
+}
+html.dark .sidebar {
+  background: linear-gradient(
+    175deg,
+    rgba(167, 139, 250, 0.10) 0%,
+    var(--sidebar-bg) 46%
+  );
+}
+
+/* Logo: gradient pill with glow */
+.logo {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.38);
+}
+html.dark .logo {
+  box-shadow: 0 3px 10px rgba(167, 139, 250, 0.28);
+}
+
+/* Topbar: accent line at bottom */
+.topbar { position: relative; }
+.topbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, var(--accent) 0%, rgba(124,58,237,0.22) 45%, transparent 75%);
+  pointer-events: none;
+}
+
+/* Primary button: gradient for depth */
+.btn.primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+}
+.btn.primary:hover {
+  background: linear-gradient(135deg, var(--accent-dim) 0%, #4C1D95 100%);
+  border-color: var(--accent-dim);
+}
+html.dark .btn.primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+}
+
+/* Stat card value: accent left bar */
+.stat-card-value {
+  border-left-color: var(--accent);
+}
+
+/* Nav active: stronger left bar */
+.nav-item.active::before {
+  width: 3px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dim) 100%);
+}
+
+/* =====================================================
+   Page hero banner
+===================================================== */
+.page-hero {
+  margin: -36px -40px 32px;
+  padding: 32px 40px 28px;
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 55%, #4C1D95 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.page-hero::before {
+  content: '';
+  position: absolute;
+  top: -70px; right: -70px;
+  width: 280px; height: 280px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.page-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -50px; left: 28%;
+  width: 200px; height: 200px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.page-hero h1 {
+  color: #fff;
+  margin-bottom: 4px;
+  position: relative; z-index: 1;
+}
+.page-hero p {
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+  font-size: 13.5px;
+  position: relative; z-index: 1;
+}
+.page-hero-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255, 255, 255, 0.16);
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  margin-bottom: 12px;
+  position: relative; z-index: 1;
+}
+
+/* Hero color variants */
+.page-hero.hero-blue   { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 55%, #1E40AF 100%); }
+.page-hero.hero-green  { background: linear-gradient(135deg, #16A34A 0%, #15803D 55%, #166534 100%); }
+.page-hero.hero-orange { background: linear-gradient(135deg, #EA580C 0%, #C2410C 55%, #9A3412 100%); }
+.page-hero.hero-indigo { background: linear-gradient(135deg, #4F46E5 0%, #3730A3 55%, #312E81 100%); }
+.page-hero.hero-teal   { background: linear-gradient(135deg, #0D9488 0%, #0F766E 55%, #115E59 100%); }
+
+@media (max-width: 980px) {
+  .page-hero { margin: -20px -16px 24px; padding: 24px 16px 20px; }
+}

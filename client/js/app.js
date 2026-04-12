@@ -1314,12 +1314,16 @@ $("#employeesTable") && $("#employeesTable").addEventListener("click", (e) => {
   if (act === "editEmp") {
     const emp = state.employees.find(x => x.id === id);
     if (!emp) return;
-    if ($("#employeeId")) $("#employeeId").value = emp.id;
-    if ($("#empName"))     $("#empName").value = emp.name;
-    if ($("#empUsername")) $("#empUsername").value = emp.username;
-    if ($("#empRole"))     $("#empRole").value = emp.role;
-    if ($("#empDepartment")) $("#empDepartment").value = emp.department || "";
-    toast("Editing employee.");
+    if ($("#employeeId")) {
+      $("#employeeId").value = emp.id;
+      if ($("#empName"))       $("#empName").value = emp.name;
+      if ($("#empUsername"))   $("#empUsername").value = emp.username;
+      if ($("#empRole"))       $("#empRole").value = emp.role;
+      if ($("#empDepartment")) $("#empDepartment").value = emp.department || "";
+      toast("Editing employee.");
+    } else {
+      location.href = "register-employee.html?edit=" + encodeURIComponent(id);
+    }
   }
 
   if (act === "delEmp") {
@@ -1669,6 +1673,20 @@ if (_sidebarEl) {
 }
 
 rerenderAll();
+
+// Pre-populate employee form from ?edit= URL param on register-employee.html
+(function() {
+  var params = new URLSearchParams(location.search);
+  var editId = params.get("edit");
+  if (!editId || !$("#employeeForm")) return;
+  var emp = state && state.employees && state.employees.find(function(x) { return x.id === editId; });
+  if (!emp) return;
+  if ($("#employeeId"))    $("#employeeId").value = emp.id;
+  if ($("#empName"))       $("#empName").value = emp.name;
+  if ($("#empUsername"))   $("#empUsername").value = emp.username;
+  if ($("#empRole"))       $("#empRole").value = emp.role;
+  if ($("#empDepartment")) $("#empDepartment").value = emp.department || "";
+})();
 
 // Staggered stat card entrance when arriving from login
 if (sessionStorage.getItem('mt_from_login') === '1') {
