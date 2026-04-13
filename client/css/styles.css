@@ -521,7 +521,6 @@ html.dark .nav-item.active .nav-badge {
 .content::-webkit-scrollbar-thumb { background: var(--border-em); border-radius: var(--r-pill); }
 
 /* .panel entrance is handled by initTransitions (JS) — no CSS animation needed */
-.panel { }
 
 .panel-header { margin-bottom: 28px; }
 .panel-header-row {
@@ -972,26 +971,6 @@ html.dark .toast {
   position: relative; width: 44px; height: 24px; flex-shrink: 0;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
-.switch-slider {
-  position: absolute; inset: 0;
-  background: var(--surface-3);
-  border: 1.5px solid var(--border-em);
-  border-radius: var(--r-pill);
-  cursor: pointer;
-  transition: background 180ms ease, border-color 180ms ease;
-}
-.switch-slider::before {
-  content: '';
-  position: absolute;
-  width: 16px; height: 16px;
-  left: 2px; top: 50%;
-  transform: translateY(-50%);
-  background: var(--text-2);
-  border-radius: 50%;
-  transition: transform 180ms var(--ease), background 180ms ease;
-}
-.switch input:checked + .switch-slider { background: var(--accent); border-color: var(--accent); }
-.switch input:checked + .switch-slider::before { transform: translate(20px, -50%); background: #fff; }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    AUTH PAGE
@@ -1192,13 +1171,6 @@ html.dark .hint strong { color: rgba(255,255,255,0.40); }
 .chart-wrap { position: relative; width: 100%; }
 .chart-wrap canvas { display: block; width: 100% !important; }
 
-.analytics-updated {
-  font-size: 11px;
-  color: var(--text-2);
-  white-space: nowrap;
-  padding-top: 6px;
-  flex-shrink: 0;
-}
 
 /* Suppress card lift on chart containers — canvas shouldn't jump on hover */
 .charts-grid .card:hover { transform: none; }
@@ -1506,19 +1478,48 @@ html.dark .btn.primary {
 .panel > .grid + .card,
 .panel > .card + .card { margin-top: 20px; }
 
+/* =====================================================
+   Tier row — commission rates, role reference lists
+===================================================== */
+.tier-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tier-row:last-child { border-bottom: none; }
+.tier-row-info { flex: 1; min-width: 0; }
+.tier-row-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+
+/* =====================================================
+   Card header row — h2 + inline action button
+===================================================== */
+.card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.card-header-row h2 { flex: 1; margin-bottom: 0; }
+
+/* =====================================================
+   Back nav — wrapper for back-link above the panel
+===================================================== */
+.back-nav { margin-bottom: 20px; }
+
+/* =====================================================
+   Compact tables — toggled by utilities.html switch
+===================================================== */
+body.compact td { padding: 7px 14px; }
+body.compact th { padding: 7px 14px; }
+
 /* Analytics timestamp in hero */
-.analytics-updated {
+.page-hero .analytics-updated {
   color: rgba(255, 255, 255, 0.60);
   font-size: 12px;
   white-space: nowrap;
   padding-top: 6px;
   flex-shrink: 0;
 }
-
-/* Nav sub-item indent for Register Employee under Employees */
-.nav-item-sub {
-  padding-left: 32px;
-  font-size: 12.5px;
-}
-.nav-item-sub::before { display: none; }
-.nav-item-sub.active::before { display: block; }

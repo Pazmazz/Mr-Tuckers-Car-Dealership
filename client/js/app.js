@@ -210,7 +210,6 @@ function deleteEmployee(id) {
 
 function upsertDriverLicense(dl) {
   if (!dl.licenseNo || !dl.licenseNo.trim()) throw new Error("License number is required.");
-  if (!dl.customerId) throw new Error("Customer is required.");
   const id = dl.id || uid("dl");
   const record = { ...dl, id, licenseNo: dl.licenseNo.trim() };
   const idx = state.driverLicenses.findIndex(d => d.id === id);
@@ -228,7 +227,6 @@ function deleteDriverLicense(id) {
 
 function upsertCreditCard(cc) {
   if (!cc.last4 || cc.last4.trim().length !== 4) throw new Error("Last 4 digits are required.");
-  if (!cc.customerId) throw new Error("Customer is required.");
   const id = cc.id || uid("cc");
   const record = { ...cc, id, last4: cc.last4.trim() };
   const idx = state.creditCards.findIndex(c => c.id === id);
@@ -726,7 +724,7 @@ function refreshCustomerFormSelects() {
     const sel = $("#" + selId);
     if (!sel) return;
     const prev = sel.value;
-    sel.innerHTML = `<option value="">— select a customer —</option>` +
+    sel.innerHTML = `<option value="">— none —</option>` +
       state.customers.map(c =>
         `<option value="${escapeAttr(c.id)}">${escapeHtml(c.first)} ${escapeHtml(c.last)} — ${escapeHtml(c.license)}</option>`
       ).join("");
@@ -744,21 +742,27 @@ function renderDriverLicenseList() {
   wrap.innerHTML = `
     <table aria-label="Driver's Licenses">
       <thead>
-        <tr><th>Holder</th><th>License #</th><th>DOB</th><th>Expires</th><th>Actions</th></tr>
+        <tr><th>Holder</th><th>License #</th><th>DOB</th><th>Expires</th><th>Linked customer</th><th>Actions</th></tr>
       </thead>
       <tbody>
-        ${state.driverLicenses.map(dl => `
+        ${state.driverLicenses.map(dl => {
+          const cust = dl.customerId ? state.customers.find(c => c.id === dl.customerId) : null;
+          const custCell = cust
+            ? `${escapeHtml(cust.first)} ${escapeHtml(cust.last)}`
+            : `<span class="muted">— unlinked —</span>`;
+          return `
           <tr>
             <td>${escapeHtml(dl.holderName)}</td>
             <td class="mono">${escapeHtml(dl.licenseNo)}</td>
             <td>${escapeHtml(dl.birthDate || "—")}</td>
             <td>${escapeHtml(dl.expirationDate || "—")}</td>
+            <td>${custCell}</td>
             <td>
               <button class="btn" data-act="editDl" data-id="${escapeAttr(dl.id)}" type="button">Edit</button>
               <button class="btn" data-act="delDl" data-id="${escapeAttr(dl.id)}" type="button">Delete</button>
             </td>
-          </tr>
-        `).join("")}
+          </tr>`;
+        }).join("")}
       </tbody>
     </table>
   `;
@@ -774,21 +778,27 @@ function renderCreditCardList() {
   wrap.innerHTML = `
     <table aria-label="Credit Cards">
       <thead>
-        <tr><th>Holder</th><th>Card</th><th>Expires</th><th>Zip</th><th>Actions</th></tr>
+        <tr><th>Holder</th><th>Card</th><th>Expires</th><th>Zip</th><th>Linked customer</th><th>Actions</th></tr>
       </thead>
       <tbody>
-        ${state.creditCards.map(cc => `
+        ${state.creditCards.map(cc => {
+          const cust = cc.customerId ? state.customers.find(c => c.id === cc.customerId) : null;
+          const custCell = cust
+            ? `${escapeHtml(cust.first)} ${escapeHtml(cust.last)}`
+            : `<span class="muted">— unlinked —</span>`;
+          return `
           <tr>
             <td>${escapeHtml(cc.holderName)}</td>
             <td class="mono">•••• •••• •••• ${escapeHtml(cc.last4)}</td>
             <td class="mono">${escapeHtml(cc.expirationDate)}</td>
             <td>${escapeHtml(cc.zipCode)}</td>
+            <td>${custCell}</td>
             <td>
               <button class="btn" data-act="editCc" data-id="${escapeAttr(cc.id)}" type="button">Edit</button>
               <button class="btn" data-act="delCc" data-id="${escapeAttr(cc.id)}" type="button">Delete</button>
             </td>
-          </tr>
-        `).join("")}
+          </tr>`;
+        }).join("")}
       </tbody>
     </table>
   `;
@@ -1468,33 +1478,7 @@ $("#ccList") && $("#ccList").addEventListener("click", (e) => {
   });
 })();
 
-/* ---- DL form: auto-fill from selected customer ---- */
-(function initDlCustomerLink() {
-  const sel = $("#dlCustomer");
-  if (!sel) return;
-  sel.addEventListener("change", () => {
-    const cust = state.customers.find(c => c.id === sel.value);
-    if (!cust) return;
-    const holderEl = $("#dlHolderName");
-    const licEl    = $("#dlLicenseNo");
-    const addrEl   = $("#dlAddress");
-    if (holderEl && !holderEl.value) holderEl.value = `${cust.first} ${cust.last}`.trim();
-    if (licEl    && !licEl.value)    licEl.value    = cust.license;
-    if (addrEl   && !addrEl.value)   addrEl.value   = cust.address || "";
-  });
-})();
-
-/* ---- CC form: auto-fill holder name from selected customer ---- */
-(function initCcCustomerLink() {
-  const sel = $("#ccCustomer");
-  if (!sel) return;
-  sel.addEventListener("change", () => {
-    const cust = state.customers.find(c => c.id === sel.value);
-    if (!cust) return;
-    const holderEl = $("#ccHolderName");
-    if (holderEl && !holderEl.value) holderEl.value = `${cust.first} ${cust.last}`.trim();
-  });
-})();
+/* ---- DL / CC customer selects: no auto-fill (record details are entered first, customer link is optional) ---- */
 
 $("#btnResetAll") && $("#btnResetAll").addEventListener("click", () => {
   if (!confirm("Reset ALL data? This cannot be undone.")) return;

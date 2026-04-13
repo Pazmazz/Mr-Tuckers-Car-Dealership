@@ -54,7 +54,7 @@
       <div class="page-hero hero-indigo">
         <div class="page-hero-tag">Records</div>
         <h1>Driver Licenses</h1>
-        <p>Store and manage customer driver's license information linked to their profiles.</p>
+        <p>Record driver's license details and optionally link each license to a customer profile.</p>
       </div>
 
       <div class="panel">
@@ -62,10 +62,9 @@
 
           <div class="card accent-border">
             <h2>Add / Edit License</h2>
-            <p class="muted small" style="margin-bottom:16px">Link a driver's license to an existing customer record.</p>
+            <p class="muted small" style="margin-bottom:16px">Enter the license details, then optionally assign the record to a customer.</p>
             <form id="dlForm" class="form">
               <input id="dlId" type="hidden" />
-              <label>Customer<select id="dlCustomer" required></select></label>
               <div class="grid two tight">
                 <label>Holder name<input id="dlHolderName" required placeholder="Jane Smith" /></label>
                 <label>License number<input id="dlLicenseNo" required placeholder="S123-456-789" /></label>
@@ -81,6 +80,8 @@
               </div>
               <label>Address<input id="dlAddress" placeholder="123 Main St, Springfield, IL 62701" /></label>
               <label>Restrictions<input id="dlRestrictions" placeholder="None" /></label>
+              <div class="form-section-label" style="margin-top:8px">Link to customer</div>
+              <label>Customer <span class="muted small">(optional)</span><select id="dlCustomer"><option value="">— none —</option></select></label>
               <div class="row" style="margin-top:4px">
                 <button class="btn primary" type="submit">
                   <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 8.5l2-4h7l2 4"/><rect x="1.5" y="8.5" width="12" height="3" rx="1"/></svg>
