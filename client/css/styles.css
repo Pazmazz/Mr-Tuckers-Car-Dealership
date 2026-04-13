@@ -1499,3 +1499,26 @@ html.dark .btn.primary {
 @media (max-width: 980px) {
   .page-hero { margin: -20px -16px 24px; padding: 24px 16px 20px; }
 }
+
+/* =====================================================
+   Panel card spacing
+===================================================== */
+.panel > .grid + .card,
+.panel > .card + .card { margin-top: 20px; }
+
+/* Analytics timestamp in hero */
+.analytics-updated {
+  color: rgba(255, 255, 255, 0.60);
+  font-size: 12px;
+  white-space: nowrap;
+  padding-top: 6px;
+  flex-shrink: 0;
+}
+
+/* Nav sub-item indent for Register Employee under Employees */
+.nav-item-sub {
+  padding-left: 32px;
+  font-size: 12.5px;
+}
+.nav-item-sub::before { display: none; }
+.nav-item-sub.active::before { display: block; }
