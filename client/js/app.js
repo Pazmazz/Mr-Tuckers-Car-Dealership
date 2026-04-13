@@ -1463,7 +1463,7 @@ $("#ccForm") && $("#ccForm").addEventListener("submit", async (e) => {
     upsertCreditCard(cc);
 
     await apiPost("credit_cards", {
-      credit_card_number: customerId,
+      credit_card_number: id,
       holder_name : holderName,
       security_code: last4,
       expiration_date: expirationDate,
@@ -1504,6 +1504,9 @@ $("#ccList") && $("#ccList").addEventListener("click", (e) => {
 
   if (act === "delCc") {
     deleteCreditCard(id);
+    
+    apiDelete(`creditcard/${customerId}`);
+    
     toast("Card deleted.");
     rerenderAll();
   }
