@@ -19,6 +19,7 @@
       <a class="nav-item" href="customers.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>Customers<span class="nav-badge" id="nbCustomers"></span></a>
       <a class="nav-item" href="transactions.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="1.5" width="9" height="12" rx="1.5"/><path d="M5.5 5h4M5.5 7.5h4M5.5 10h2.5"/></svg>Transactions<span class="nav-badge" id="nbTransactions"></span></a>
       <a class="nav-item" href="employees.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="10.5" cy="4" r="2"/><path d="M0.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M10 8.6c2.21.47 3.5 2.3 3.5 4.4"/></svg>Employees<span class="nav-badge" id="nbEmployees"></span></a>
+      <a class="nav-item" href="register-employee.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="4" r="2.5"/><path d="M1.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M11.5 1v5M9 3.5h5"/></svg>Register Employee</a>
       <a class="nav-item" href="reports.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>Reports</a>
       <a class="nav-item" id="navAnalytics" href="analytics.html" hidden><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 13.5V8.5M5.5 13.5V5.5M9.5 13.5V3.5M13.5 13.5V1.5"/></svg>Analytics</a>
     </div>
@@ -53,7 +54,7 @@
       <div class="page-hero hero-indigo">
         <div class="page-hero-tag">Records</div>
         <h1>Driver Licenses</h1>
-        <p>Store and manage customer driver's license information linked to their profiles.</p>
+        <p>Record driver's license details and optionally link each license to a customer profile.</p>
       </div>
 
       <div class="panel">
@@ -61,10 +62,9 @@
 
           <div class="card accent-border">
             <h2>Add / Edit License</h2>
-            <p class="muted small" style="margin-bottom:16px">Link a driver's license to an existing customer record.</p>
+            <p class="muted small" style="margin-bottom:16px">Enter the license details, then optionally assign the record to a customer.</p>
             <form id="dlForm" class="form">
               <input id="dlId" type="hidden" />
-              <label>Customer<select id="dlCustomer" required></select></label>
               <div class="grid two tight">
                 <label>Holder name<input id="dlHolderName" required placeholder="Jane Smith" /></label>
                 <label>License number<input id="dlLicenseNo" required placeholder="S123-456-789" /></label>
@@ -80,6 +80,8 @@
               </div>
               <label>Address<input id="dlAddress" placeholder="123 Main St, Springfield, IL 62701" /></label>
               <label>Restrictions<input id="dlRestrictions" placeholder="None" /></label>
+              <div class="form-section-label" style="margin-top:8px">Link to customer</div>
+              <label>Customer <span class="muted small">(optional)</span><select id="dlCustomer"><option value="">— none —</option></select></label>
               <div class="row" style="margin-top:4px">
                 <button class="btn primary" type="submit">
                   <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 8.5l2-4h7l2 4"/><rect x="1.5" y="8.5" width="12" height="3" rx="1"/></svg>
