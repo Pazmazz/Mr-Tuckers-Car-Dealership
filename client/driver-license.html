@@ -54,7 +54,7 @@
       <div class="page-hero hero-indigo">
         <div class="page-hero-tag">Records</div>
         <h1>Driver Licenses</h1>
-        <p>Record driver's license details and optionally link each license to a customer profile.</p>
+        <p>Create and manage driver's license records. Link licenses to customers from the Customer form.</p>
       </div>
 
       <div class="panel">
@@ -62,26 +62,24 @@
 
           <div class="card accent-border">
             <h2>Add / Edit License</h2>
-            <p class="muted small" style="margin-bottom:16px">Enter the license details, then optionally assign the record to a customer.</p>
+            <p class="muted small" style="margin-bottom:16px">Enter the license details. To link this license to a customer, use the Customer form.</p>
             <form id="dlForm" class="form">
               <input id="dlId" type="hidden" />
               <div class="grid two tight">
-                <label>Holder name<input id="dlHolderName" required placeholder="Jane Smith" /></label>
-                <label>License number<input id="dlLicenseNo" required placeholder="S123-456-789" /></label>
+                <label>License ID <span class="muted small">(drivers_license_id)</span><input id="dl_drivers_license_id" type="number" min="1" step="1" required placeholder="1001" /></label>
+                <label>Holder name <span class="muted small">(holder_name)</span><input id="dl_holder_name" required placeholder="Jane Smith" /></label>
               </div>
               <div class="grid two tight">
-                <label>Date of birth<input id="dlBirthDate" type="date" required /></label>
-                <label>Expiry date<input id="dlExpDate" type="date" required /></label>
+                <label>Date of birth <span class="muted small">(birth_date)</span><input id="dl_birth_date" type="date" required /></label>
+                <label>Expiry date <span class="muted small">(expiration_date)</span><input id="dl_expiration_date" type="date" required /></label>
               </div>
               <div class="grid three tight">
-                <label>Sex<select id="dlSex" required><option value="">—</option><option>M</option><option>F</option><option>X</option></select></label>
-                <label>Eye color<input id="dlEyeColor" placeholder="BRN" /></label>
-                <label>Weight (lbs)<input id="dlWeight" type="number" min="0" step="1" placeholder="165" /></label>
+                <label>Sex <span class="muted small">(sex)</span><select id="dl_sex" required><option value="">—</option><option>M</option><option>F</option><option>X</option></select></label>
+                <label>Eye color <span class="muted small">(eye_color)</span><input id="dl_eye_color" placeholder="BRN" /></label>
+                <label>Weight lbs <span class="muted small">(weight)</span><input id="dl_weight" type="number" min="0" step="1" placeholder="165" /></label>
               </div>
-              <label>Address<input id="dlAddress" placeholder="123 Main St, Springfield, IL 62701" /></label>
-              <label>Restrictions<input id="dlRestrictions" placeholder="None" /></label>
-              <div class="form-section-label" style="margin-top:8px">Link to customer</div>
-              <label>Customer <span class="muted small">(optional)</span><select id="dlCustomer"><option value="">— none —</option></select></label>
+              <label>Address <span class="muted small">(address)</span><input id="dl_address" placeholder="123 Main St, Springfield, IL 62701" /></label>
+              <label>Restrictions <span class="muted small">(restrictions)</span><input id="dl_restrictions" placeholder="None" /></label>
               <div class="row" style="margin-top:4px">
                 <button class="btn primary" type="submit">
                   <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 8.5l2-4h7l2 4"/><rect x="1.5" y="8.5" width="12" height="3" rx="1"/></svg>

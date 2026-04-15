@@ -75,12 +75,12 @@
               <input id="employeeId" type="hidden" />
               <div class="form-section-label">Identity</div>
               <div class="grid two tight">
-                <label>Full name<input id="empName" required placeholder="Jane Smith" /></label>
-                <label>Username<input id="empUsername" required placeholder="jane_smith" /></label>
+                <label>Employee ID <span class="muted small">(employee_id)</span><input id="emp_employee_id" type="number" min="1" step="1" required placeholder="101" /></label>
+                <label>Employee name <span class="muted small">(employee_name)</span><input id="emp_employee_name" required placeholder="Jane Smith" /></label>
               </div>
-              <div class="form-section-label">Role &amp; Department</div>
               <div class="grid two tight">
-                <label>Role
+                <label>Username <span class="muted small">(login)</span><input id="empUsername" required placeholder="jane_smith" /></label>
+                <label>Role <span class="muted small">(access level)</span>
                   <select id="empRole" required>
                     <option value="salesperson">Salesperson</option>
                     <option value="manager">Manager</option>
@@ -88,7 +88,12 @@
                     <option value="service">Service</option>
                   </select>
                 </label>
-                <label>Department<input id="empDepartment" placeholder="Sales" /></label>
+              </div>
+              <div class="form-section-label">Department &amp; Reporting</div>
+              <div class="grid three tight">
+                <label>Department <span class="muted small">(department)</span><input id="empDepartment" placeholder="Sales" /></label>
+                <label>Manager ID <span class="muted small">(manager)</span><input id="emp_manager" type="number" min="0" step="1" placeholder="0" /></label>
+                <label>Commission % <span class="muted small">(commission)</span><input id="emp_commission" type="number" min="0" step="1" placeholder="5" /></label>
               </div>
               <div class="row" style="margin-top:4px">
                 <button class="btn primary" type="submit">
