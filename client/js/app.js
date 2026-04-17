@@ -1396,7 +1396,7 @@ $("#employeesTable") && $("#employeesTable").addEventListener("click", (e) => {
 
 /* ---- Driver's license form ---- */
 
-$("#dlForm") && $("#dlForm").addEventListener("submit", (e) => {
+$("#dlForm") && $("#dlForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
     const dl = {
@@ -1413,6 +1413,19 @@ $("#dlForm") && $("#dlForm").addEventListener("submit", (e) => {
       restrictions: $("#dlRestrictions").value.trim()
     };
     upsertDriverLicense(dl);
+
+    await apiPost("driver-license", {
+      drivers_license_id: licenseNo,
+      holder_name : holderName,
+      expiration_date: expirationDate,
+      address: address,
+      birth_date: birthDate,
+      sex: sex,
+      eye_color: eyeColor,
+      weight: weight,
+      restrictions: restrictions
+    });
+
     toast("Driver's license saved.");
     $("#dlForm").reset();
     $("#dlId").value = "";
@@ -1472,13 +1485,13 @@ $("#ccForm") && $("#ccForm").addEventListener("submit", async (e) => {
     };
     upsertCreditCard(cc);
 
-    await apiPost("credit_cards", {
+    await apiPost("creditcard", {
       credit_card_number: id,
       holder_name : holderName,
       security_code: last4,
       expiration_date: expirationDate,
       zip_code: zipCode
-    })
+    });
 
     toast("Credit card saved.");
     $("#ccForm").reset();
@@ -1515,7 +1528,7 @@ $("#ccList") && $("#ccList").addEventListener("click", (e) => {
   if (act === "delCc") {
     deleteCreditCard(id);
     
-    apiDelete(`creditcard/${customerId}`);
+    apiDelete(`creditcard/${credit_card_number}`);
     
     toast("Card deleted.");
     rerenderAll();
