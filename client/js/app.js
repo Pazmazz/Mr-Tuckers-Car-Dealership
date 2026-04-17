@@ -204,33 +204,66 @@ function deleteVehicle(vin) {
 }
 
 function upsertCustomer(customer) {
-  const license = customer.license.trim();
-  if (!license) throw new Error("Driver's license is required.");
+  if (!customer.drivers_license_id) throw new Error("A driver's license (drivers_license_id) must be linked.");
+  if (!customer.credit_card_number) throw new Error("A credit card (credit_card_number) must be linked.");
+  if (!customer.customer_name || !customer.customer_name.trim()) throw new Error("Customer name is required.");
 
-  const idx = state.customers.findIndex(c => c.license === license);
-  if (idx >= 0) state.customers[idx] = { ...state.customers[idx], ...customer, license };
-  else state.customers.push({ ...customer, id: uid("cust"), license, txHistory: [] });
+  const dlId = Number(customer.drivers_license_id);
+  const ccNum = Number(customer.credit_card_number);
+  const dl = state.driverLicenses.find(d => d.drivers_license_id === dlId);
+  const license = dl ? String(dl.drivers_license_id) : String(dlId);
+
+  const record = {
+    ...customer,
+    customer_name: customer.customer_name.trim(),
+    credit_score: Number(customer.credit_score || 0),
+    drivers_license_id: dlId,
+    credit_card_number: ccNum,
+    license
+  };
+
+  const existingId = customer.customer_id;
+  if (existingId) {
+    const idx = state.customers.findIndex(c => c.customer_id === existingId);
+    if (idx >= 0) {
+      state.customers[idx] = { ...state.customers[idx], ...record };
+    } else {
+      state.customers.push({ ...record, txHistory: [] });
+    }
+  } else {
+    const idx = state.customers.findIndex(c => c.drivers_license_id === dlId);
+    if (idx >= 0) {
+      state.customers[idx] = { ...state.customers[idx], ...record };
+    } else {
+      state.customers.push({ ...record, customer_id: uid("cust"), txHistory: [] });
+    }
+  }
 
   saveState();
 }
 
-function deleteCustomer(license) {
-  state.customers = state.customers.filter(c => c.license !== license);
+function deleteCustomer(customer_id) {
+  state.customers = state.customers.filter(c => c.customer_id !== customer_id);
   saveState();
 }
 
 /* ---- Employee operations ---- */
 
 function upsertEmployee(emp) {
-  if (!emp.name || !emp.name.trim()) throw new Error("Employee name is required.");
+  if (!emp.employee_name || !emp.employee_name.trim()) throw new Error("Employee name is required.");
   if (!emp.username || !emp.username.trim()) throw new Error("Username is required.");
   const id = emp.id || uid("emp");
   const record = {
     ...emp,
     id,
-    name: emp.name.trim(),
+    employee_id: emp.employee_id ? Number(emp.employee_id) : undefined,
+    employee_name: emp.employee_name.trim(),
+    department: emp.department || "",
+    manager: emp.manager ? Number(emp.manager) : 0,
+    commission: emp.commission ? Number(emp.commission) : 0,
     username: emp.username.trim(),
-    initials: emp.name.trim().split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+    name: emp.employee_name.trim(),
+    initials: emp.employee_name.trim().split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
     online: emp.online ?? false
   };
   const idx = state.employees.findIndex(e => e.id === id);
@@ -247,12 +280,20 @@ function deleteEmployee(id) {
 /* ---- Driver's license operations ---- */
 
 function upsertDriverLicense(dl) {
-  if (!dl.licenseNo || !dl.licenseNo.trim()) throw new Error("License number is required.");
-  const id = dl.id || uid("dl");
-  const record = { ...dl, id, licenseNo: dl.licenseNo.trim() };
-  const idx = state.driverLicenses.findIndex(d => d.id === id);
+  if (!dl.drivers_license_id) throw new Error("License ID (drivers_license_id) is required.");
+  const internalId = dl.id || uid("dl");
+  const record = {
+    ...dl,
+    id: internalId,
+    drivers_license_id: Number(dl.drivers_license_id)
+  };
+  const idx = state.driverLicenses.findIndex(d => d.id === internalId);
   if (idx >= 0) state.driverLicenses[idx] = record;
-  else state.driverLicenses.push(record);
+  else {
+    const dupIdx = state.driverLicenses.findIndex(d => d.drivers_license_id === record.drivers_license_id);
+    if (dupIdx >= 0) state.driverLicenses[dupIdx] = { ...state.driverLicenses[dupIdx], ...record };
+    else state.driverLicenses.push(record);
+  }
   saveState();
 }
 
@@ -264,12 +305,22 @@ function deleteDriverLicense(id) {
 /* ---- Credit card operations ---- */
 
 function upsertCreditCard(cc) {
-  if (!cc.last4 || cc.last4.trim().length !== 4) throw new Error("Last 4 digits are required.");
-  const id = cc.id || uid("cc");
-  const record = { ...cc, id, last4: cc.last4.trim() };
-  const idx = state.creditCards.findIndex(c => c.id === id);
+  if (!cc.credit_card_number) throw new Error("Card number (credit_card_number) is required.");
+  const internalId = cc.id || uid("cc");
+  const record = {
+    ...cc,
+    id: internalId,
+    credit_card_number: Number(cc.credit_card_number),
+    security_code: Number(cc.security_code || 0),
+    zip_code: Number(cc.zip_code || 0)
+  };
+  const idx = state.creditCards.findIndex(c => c.id === internalId);
   if (idx >= 0) state.creditCards[idx] = record;
-  else state.creditCards.push(record);
+  else {
+    const dupIdx = state.creditCards.findIndex(c => c.credit_card_number === record.credit_card_number);
+    if (dupIdx >= 0) state.creditCards[dupIdx] = { ...state.creditCards[dupIdx], ...record };
+    else state.creditCards.push(record);
+  }
   saveState();
 }
 
@@ -303,7 +354,7 @@ function calculateCommission(username, yyyyMM) {
 }
 
 function buildInvoiceText(tx) {
-  const customer = state.customers.find(c => c.id === tx.customerId);
+  const customer = state.customers.find(c => c.customer_id === tx.customerId);
   const vehicle = state.vehicles.find(v => v.vin === tx.vehicleVinBuy);
   if (!customer) throw new Error("Invoice error: customer missing.");
   if (!vehicle) throw new Error("Invoice error: vehicle missing.");
@@ -320,10 +371,10 @@ function buildInvoiceText(tx) {
     `Salesperson: ${tx.salesperson}`,
     "",
     "CUSTOMER",
-    `Name: ${customer.first} ${customer.middle ? customer.middle + ". " : ""}${customer.last}`,
-    `Address: ${customer.address}`,
-    `Phone: ${customer.phone1}${customer.phone2 ? " | " + customer.phone2 : ""}`,
-    `Driver's License: ${customer.license}`,
+    `Name: ${customer.customer_name}`,
+    `Address: ${customer.address || "—"}`,
+    `Phone: ${customer.phone1 || "—"}${customer.phone2 ? " | " + customer.phone2 : ""}`,
+    `Driver's License ID: ${customer.drivers_license_id}`,
     "",
     "VEHICLE",
     `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.condition})`,
@@ -352,13 +403,13 @@ function buildInvoiceText(tx) {
 }
 
 function validateCustomerForPurchase(customer) {
-  if (!customer.license || customer.license.trim().length < 3) {
-    throw new Error("Customer must have a valid driver's license to purchase.");
+  if (!customer.drivers_license_id) {
+    throw new Error("Customer must have a linked driver's license (drivers_license_id) to purchase.");
   }
 }
 
 function createTransaction(txInput) {
-  const customer = state.customers.find(c => c.id === txInput.customerId);
+  const customer = state.customers.find(c => c.customer_id === txInput.customerId);
   const vehicle = state.vehicles.find(v => v.vin === txInput.vehicleVinBuy);
 
   if (!customer) throw new Error("Customer not found.");
@@ -423,7 +474,7 @@ function globalSearch(query) {
   );
 
   const customers = state.customers.filter(c =>
-    [c.first, c.middle, c.last, c.license, c.phone1, c.phone2, c.address]
+    [c.customer_name, String(c.drivers_license_id || ""), c.phone1, c.phone2, c.address]
       .some(x => String(x || "").toLowerCase().includes(q))
   );
 
@@ -500,10 +551,9 @@ function renderCustomers() {
   const q = ($("#customerFilter")?.value || "").trim().toLowerCase();
   const customers = state.customers.filter(c => {
     if (!q) return true;
-    const name = `${c.first} ${c.middle || ""} ${c.last}`.toLowerCase();
     return (
-      name.includes(q) ||
-      String(c.license || "").toLowerCase().includes(q) ||
+      String(c.customer_name || "").toLowerCase().includes(q) ||
+      String(c.drivers_license_id || "").includes(q) ||
       String(c.phone1 || "").toLowerCase().includes(q) ||
       String(c.phone2 || "").toLowerCase().includes(q)
     );
@@ -518,25 +568,35 @@ function renderCustomers() {
     <table aria-label="Customers">
       <thead>
         <tr>
-          <th>Name</th><th>License</th><th>Credit</th><th>Phones</th>
+          <th>customer_name</th><th>drivers_license_id</th><th>credit_card_number</th><th>credit_score</th><th>Phones</th>
           <th>Address</th><th>Tx history</th><th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        ${customers.map(c => `
+        ${customers.map(c => {
+          const dl = c.drivers_license_id ? state.driverLicenses.find(d => d.drivers_license_id === c.drivers_license_id) : null;
+          const dlDisplay = dl
+            ? `${escapeHtml(dl.drivers_license_id)} — ${escapeHtml(dl.holder_name)}`
+            : (c.drivers_license_id ? escapeHtml(c.drivers_license_id) : `<span class="muted">—</span>`);
+          const cc = c.credit_card_number ? state.creditCards.find(x => x.credit_card_number === c.credit_card_number) : null;
+          const ccDisplay = cc
+            ? `${escapeHtml(cc.credit_card_number)} — ${escapeHtml(cc.holder_name)}`
+            : (c.credit_card_number ? escapeHtml(c.credit_card_number) : `<span class="muted">—</span>`);
+          return `
           <tr>
-            <td>${escapeHtml(c.first)} ${escapeHtml(c.middle ? c.middle + "." : "")} ${escapeHtml(c.last)}</td>
-            <td class="mono">${escapeHtml(c.license)}</td>
-            <td>${escapeHtml(c.creditScore)}</td>
-            <td>${escapeHtml(c.phone1)}${c.phone2 ? "<br/>" + escapeHtml(c.phone2) : ""}</td>
-            <td>${escapeHtml(c.address)}</td>
+            <td>${escapeHtml(c.customer_name)}</td>
+            <td class="mono small">${dlDisplay}</td>
+            <td class="mono small">${ccDisplay}</td>
+            <td>${escapeHtml(c.credit_score)}</td>
+            <td>${escapeHtml(c.phone1 || "—")}${c.phone2 ? "<br/>" + escapeHtml(c.phone2) : ""}</td>
+            <td>${escapeHtml(c.address || "—")}</td>
             <td class="mono small">${escapeHtml((c.txHistory || []).slice(0,3).map(t => `${t.date}:${t.type}:${Math.round(t.amountUSD)}`).join(" | ") || "—")}</td>
             <td>
-              <button class="btn" data-act="editCustomer" data-license="${escapeAttr(c.license)}" type="button">Edit</button>
-              <button class="btn" data-act="delCustomer" data-license="${escapeAttr(c.license)}" type="button">Delete</button>
+              <button class="btn" data-act="editCustomer" data-id="${escapeAttr(c.customer_id)}" type="button">Edit</button>
+              <button class="btn" data-act="delCustomer" data-id="${escapeAttr(c.customer_id)}" type="button">Delete</button>
             </td>
-          </tr>
-        `).join("")}
+          </tr>`;
+        }).join("")}
       </tbody>
     </table>
   `;
@@ -548,7 +608,7 @@ function refreshTransactionSelects() {
   if (!custSel || !vehSel) return;
 
   custSel.innerHTML = state.customers.length
-    ? state.customers.map(c => `<option value="${escapeAttr(c.id)}">${escapeHtml(c.first)} ${escapeHtml(c.last)} — ${escapeHtml(c.license)}</option>`).join("")
+    ? state.customers.map(c => `<option value="${escapeAttr(c.customer_id)}">${escapeHtml(c.customer_name)} — DL# ${escapeHtml(c.drivers_license_id)}</option>`).join("")
     : `<option value="">(No customers — add one first)</option>`;
 
   const available = state.vehicles.filter(v => Number(v.stock) > 0);
@@ -579,8 +639,8 @@ function renderTransactions() {
       </thead>
       <tbody>
         ${state.transactions.map(tx => {
-          const customer = state.customers.find(c => c.id === tx.customerId);
-          const name = customer ? `${customer.first} ${customer.last}` : "Unknown";
+          const customer = state.customers.find(c => c.customer_id === tx.customerId);
+          const name = customer ? customer.customer_name : "Unknown";
           return `
             <tr>
               <td>${escapeHtml(tx.date)}</td>
@@ -673,7 +733,7 @@ function renderSearch() {
     <div class="card">
       <h2>Customers</h2>
       ${res.customers.length ? res.customers.map(c => `
-        <div class="muted small mono">${escapeHtml(c.license)} — ${escapeHtml(c.first)} ${escapeHtml(c.last)} (${escapeHtml(c.phone1)})</div>
+        <div class="muted small mono">DL#${escapeHtml(c.drivers_license_id)} — ${escapeHtml(c.customer_name)} (${escapeHtml(c.phone1 || "—")})</div>
       `).join("") : `<div class="muted small">No matches.</div>`}
     </div>
 
@@ -736,38 +796,52 @@ function renderEmployeesPage() {
 
   wrap.innerHTML = `
     <table aria-label="Employees">
-      <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>employee_name</th><th>employee_id</th><th>Username</th><th>Role</th><th>Department</th><th>manager</th><th>commission</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
-        ${allEmployees.map(e => `
+        ${allEmployees.map(e => {
+          const displayName = e.employee_name || e.name || "—";
+          const initials = e.initials || displayName.slice(0,2).toUpperCase();
+          return `
           <tr>
-            <td><span class="emp-row-avatar">${escapeHtml(e.initials || e.name.slice(0,2).toUpperCase())}</span>${escapeHtml(e.name)}</td>
+            <td><span class="emp-row-avatar">${escapeHtml(initials)}</span>${escapeHtml(displayName)}</td>
+            <td class="mono">${escapeHtml(e.employee_id != null ? e.employee_id : "—")}</td>
             <td class="mono">${escapeHtml(e.username || "—")}</td>
             <td>${escapeHtml(e.role)}</td>
             <td>${escapeHtml(e.department || "—")}</td>
+            <td class="mono">${escapeHtml(e.manager != null ? e.manager : "—")}</td>
+            <td class="mono">${escapeHtml(e.commission != null ? e.commission + "%" : "—")}</td>
             <td><span class="badge ${e.online ? "ok" : "subtle"}">${e.online ? "Online" : "Offline"}</span></td>
             <td>${e.isMock
               ? `<span class="muted small">Demo</span>`
               : `<button class="btn" data-act="editEmp" data-id="${escapeAttr(e.id)}" type="button">Edit</button>
                  <button class="btn" data-act="delEmp" data-id="${escapeAttr(e.id)}" type="button">Remove</button>`
             }</td>
-          </tr>
-        `).join("")}
+          </tr>`;
+        }).join("")}
       </tbody>
     </table>
   `;
 }
 
 function refreshCustomerFormSelects() {
-  ["dlCustomer", "ccCustomer"].forEach(selId => {
-    const sel = $("#" + selId);
-    if (!sel) return;
-    const prev = sel.value;
-    sel.innerHTML = `<option value="">— none —</option>` +
-      state.customers.map(c =>
-        `<option value="${escapeAttr(c.id)}">${escapeHtml(c.first)} ${escapeHtml(c.last)} — ${escapeHtml(c.license)}</option>`
+  const dlSel = $("#cust_drivers_license_id");
+  if (dlSel) {
+    const prev = dlSel.value;
+    dlSel.innerHTML = `<option value="">— select a driver's license —</option>` +
+      state.driverLicenses.map(dl =>
+        `<option value="${escapeAttr(dl.drivers_license_id)}">${escapeHtml(dl.holder_name)} — ID: ${escapeHtml(dl.drivers_license_id)}</option>`
       ).join("");
-    if (prev) sel.value = prev;
-  });
+    if (prev) dlSel.value = prev;
+  }
+  const ccSel = $("#cust_credit_card_number");
+  if (ccSel) {
+    const prev = ccSel.value;
+    ccSel.innerHTML = `<option value="">— select a credit card —</option>` +
+      state.creditCards.map(cc =>
+        `<option value="${escapeAttr(cc.credit_card_number)}">${escapeHtml(cc.holder_name)} — #${escapeHtml(cc.credit_card_number)}</option>`
+      ).join("");
+    if (prev) ccSel.value = prev;
+  }
 }
 
 function renderDriverLicenseList() {
@@ -780,20 +854,20 @@ function renderDriverLicenseList() {
   wrap.innerHTML = `
     <table aria-label="Driver's Licenses">
       <thead>
-        <tr><th>Holder</th><th>License #</th><th>DOB</th><th>Expires</th><th>Linked customer</th><th>Actions</th></tr>
+        <tr><th>drivers_license_id</th><th>holder_name</th><th>birth_date</th><th>expiration_date</th><th>Linked customer</th><th>Actions</th></tr>
       </thead>
       <tbody>
         ${state.driverLicenses.map(dl => {
-          const cust = dl.customerId ? state.customers.find(c => c.id === dl.customerId) : null;
+          const cust = state.customers.find(c => c.drivers_license_id === dl.drivers_license_id);
           const custCell = cust
-            ? `${escapeHtml(cust.first)} ${escapeHtml(cust.last)}`
+            ? escapeHtml(cust.customer_name)
             : `<span class="muted">— unlinked —</span>`;
           return `
           <tr>
-            <td>${escapeHtml(dl.holderName)}</td>
-            <td class="mono">${escapeHtml(dl.licenseNo)}</td>
-            <td>${escapeHtml(dl.birthDate || "—")}</td>
-            <td>${escapeHtml(dl.expirationDate || "—")}</td>
+            <td class="mono">${escapeHtml(dl.drivers_license_id)}</td>
+            <td>${escapeHtml(dl.holder_name)}</td>
+            <td>${escapeHtml(dl.birth_date || "—")}</td>
+            <td>${escapeHtml(dl.expiration_date || "—")}</td>
             <td>${custCell}</td>
             <td>
               <button class="btn" data-act="editDl" data-id="${escapeAttr(dl.id)}" type="button">Edit</button>
@@ -816,20 +890,21 @@ function renderCreditCardList() {
   wrap.innerHTML = `
     <table aria-label="Credit Cards">
       <thead>
-        <tr><th>Holder</th><th>Card</th><th>Expires</th><th>Zip</th><th>Linked customer</th><th>Actions</th></tr>
+        <tr><th>credit_card_number</th><th>holder_name</th><th>security_code</th><th>expiration_date</th><th>zip_code</th><th>Linked customer</th><th>Actions</th></tr>
       </thead>
       <tbody>
         ${state.creditCards.map(cc => {
-          const cust = cc.customerId ? state.customers.find(c => c.id === cc.customerId) : null;
+          const cust = state.customers.find(c => c.credit_card_number === cc.credit_card_number);
           const custCell = cust
-            ? `${escapeHtml(cust.first)} ${escapeHtml(cust.last)}`
+            ? escapeHtml(cust.customer_name)
             : `<span class="muted">— unlinked —</span>`;
           return `
           <tr>
-            <td>${escapeHtml(cc.holderName)}</td>
-            <td class="mono">•••• •••• •••• ${escapeHtml(cc.last4)}</td>
-            <td class="mono">${escapeHtml(cc.expirationDate)}</td>
-            <td>${escapeHtml(cc.zipCode)}</td>
+            <td class="mono">${escapeHtml(cc.credit_card_number)}</td>
+            <td>${escapeHtml(cc.holder_name)}</td>
+            <td class="mono">${escapeHtml(cc.security_code)}</td>
+            <td class="mono">${escapeHtml(cc.expiration_date)}</td>
+            <td>${escapeHtml(cc.zip_code)}</td>
             <td>${custCell}</td>
             <td>
               <button class="btn" data-act="editCc" data-id="${escapeAttr(cc.id)}" type="button">Edit</button>
@@ -969,15 +1044,14 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
   e.preventDefault();
   try {
     const c = {
-      id: $("#customerId").value || undefined,
-      first: $("#custFirst").value.trim(),
-      middle: $("#custMiddle").value.trim(),
-      last: $("#custLast").value.trim(),
+      customer_id: $("#customerId").value || undefined,
+      customer_name: $("#cust_customer_name").value.trim(),
+      credit_score: Number($("#cust_credit_score").value),
+      drivers_license_id: Number($("#cust_drivers_license_id").value) || undefined,
+      credit_card_number: Number($("#cust_credit_card_number").value) || undefined,
       address: $("#custAddress").value.trim(),
       phone1: $("#custPhone1").value.trim(),
-      phone2: $("#custPhone2").value.trim(),
-      license: $("#custLicense").value.trim(),
-      creditScore: Number($("#custCredit").value)
+      phone2: $("#custPhone2").value.trim()
     };
     upsertCustomer(c);
 
@@ -1010,25 +1084,24 @@ $("#customerList") && $("#customerList").addEventListener("click", async (e) => 
   if (!btn) return;
 
   const act = btn.dataset.act;
-  const license = btn.dataset.license;
+  const id = btn.dataset.id;
 
   if (act === "editCustomer") {
-    const c = state.customers.find(x => x.license === license);
+    const c = state.customers.find(x => x.customer_id === id);
     if (!c) return;
-    $("#customerId").value = c.id || "";
-    $("#custFirst").value = c.first;
-    $("#custMiddle").value = c.middle || "";
-    $("#custLast").value = c.last;
-    $("#custAddress").value = c.address;
-    $("#custPhone1").value = c.phone1;
-    $("#custPhone2").value = c.phone2 || "";
-    $("#custLicense").value = c.license;
-    $("#custCredit").value = c.creditScore;
+    $("#customerId").value = c.customer_id || "";
+    if ($("#cust_customer_name")) $("#cust_customer_name").value = c.customer_name || "";
+    if ($("#cust_credit_score")) $("#cust_credit_score").value = c.credit_score || "";
+    if ($("#custAddress")) $("#custAddress").value = c.address || "";
+    if ($("#custPhone1")) $("#custPhone1").value = c.phone1 || "";
+    if ($("#custPhone2")) $("#custPhone2").value = c.phone2 || "";
+    if ($("#cust_drivers_license_id") && c.drivers_license_id) $("#cust_drivers_license_id").value = c.drivers_license_id;
+    if ($("#cust_credit_card_number") && c.credit_card_number) $("#cust_credit_card_number").value = c.credit_card_number;
     toast("Editing customer.");
   }
 
   if (act === "delCustomer") {
-    deleteCustomer(license);
+    deleteCustomer(id);
 
     // Delete form data from prisma
     await apiDelete(`customers/${customerId}`);
@@ -1299,8 +1372,8 @@ function renderDcQuotes() {
   const csvBtn = $("#btnExportCSV");
   if (csvBtn) {
     csvBtn.addEventListener("click", () => {
-      const headers = ["First","Middle","Last","License","Phone1","Phone2","Address","Credit Score"];
-      const rows = state.customers.map(c => [c.first, c.middle||"", c.last, c.license, c.phone1, c.phone2||"", c.address, c.creditScore].map(v => `"${String(v).replace(/"/g,'""')}"`).join(","));
+      const headers = ["customer_name","drivers_license_id","credit_card_number","credit_score","Phone1","Phone2","Address"];
+      const rows = state.customers.map(c => [c.customer_name||"", c.drivers_license_id||"", c.credit_card_number||"", c.credit_score||"", c.phone1||"", c.phone2||"", c.address||""].map(v => `"${String(v).replace(/"/g,'""')}"`).join(","));
       const csv = [headers.join(","), ...rows].join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
@@ -1346,10 +1419,13 @@ $("#employeeForm") && $("#employeeForm").addEventListener("submit", (e) => {
   try {
     const emp = {
       id: $("#employeeId").value || undefined,
-      name: $("#empName").value.trim(),
+      employee_id: Number($("#emp_employee_id").value) || undefined,
+      employee_name: $("#emp_employee_name").value.trim(),
       username: $("#empUsername").value.trim(),
       role: $("#empRole").value,
-      department: $("#empDepartment").value.trim()
+      department: $("#empDepartment").value.trim(),
+      manager: Number($("#emp_manager").value) || 0,
+      commission: Number($("#emp_commission").value) || 0
     };
     upsertEmployee(emp);
     toast("Employee registered.");
@@ -1377,10 +1453,13 @@ $("#employeesTable") && $("#employeesTable").addEventListener("click", (e) => {
     if (!emp) return;
     if ($("#employeeId")) {
       $("#employeeId").value = emp.id;
-      if ($("#empName"))       $("#empName").value = emp.name;
-      if ($("#empUsername"))   $("#empUsername").value = emp.username;
-      if ($("#empRole"))       $("#empRole").value = emp.role;
-      if ($("#empDepartment")) $("#empDepartment").value = emp.department || "";
+      if ($("#emp_employee_name")) $("#emp_employee_name").value = emp.employee_name || emp.name || "";
+      if ($("#emp_employee_id"))   $("#emp_employee_id").value = emp.employee_id != null ? emp.employee_id : "";
+      if ($("#empUsername"))       $("#empUsername").value = emp.username || "";
+      if ($("#empRole"))           $("#empRole").value = emp.role || "salesperson";
+      if ($("#empDepartment"))     $("#empDepartment").value = emp.department || "";
+      if ($("#emp_manager"))       $("#emp_manager").value = emp.manager != null ? emp.manager : "";
+      if ($("#emp_commission"))    $("#emp_commission").value = emp.commission != null ? emp.commission : "";
       toast("Editing employee.");
     } else {
       location.href = "register-employee.html?edit=" + encodeURIComponent(id);
@@ -1401,16 +1480,15 @@ $("#dlForm") && $("#dlForm").addEventListener("submit", async (e) => {
   try {
     const dl = {
       id: $("#dlId").value || undefined,
-      customerId: $("#dlCustomer").value,
-      holderName: $("#dlHolderName").value.trim(),
-      licenseNo: $("#dlLicenseNo").value.trim(),
-      birthDate: $("#dlBirthDate").value,
-      expirationDate: $("#dlExpDate").value,
-      sex: $("#dlSex").value,
-      eyeColor: $("#dlEyeColor").value.trim(),
-      weight: $("#dlWeight").value.trim(),
-      address: $("#dlAddress").value.trim(),
-      restrictions: $("#dlRestrictions").value.trim()
+      drivers_license_id: Number($("#dl_drivers_license_id").value),
+      holder_name: $("#dl_holder_name").value.trim(),
+      birth_date: $("#dl_birth_date").value,
+      expiration_date: $("#dl_expiration_date").value,
+      sex: $("#dl_sex").value,
+      eye_color: $("#dl_eye_color").value.trim(),
+      weight: Number($("#dl_weight").value || 0),
+      address: $("#dl_address").value.trim(),
+      restrictions: $("#dl_restrictions").value.trim()
     };
     upsertDriverLicense(dl);
 
@@ -1449,17 +1527,16 @@ $("#dlList") && $("#dlList").addEventListener("click", (e) => {
   if (act === "editDl") {
     const dl = state.driverLicenses.find(x => x.id === id);
     if (!dl) return;
-    if ($("#dlId"))          $("#dlId").value = dl.id;
-    if ($("#dlCustomer"))    $("#dlCustomer").value = dl.customerId;
-    if ($("#dlHolderName"))  $("#dlHolderName").value = dl.holderName;
-    if ($("#dlLicenseNo"))   $("#dlLicenseNo").value = dl.licenseNo;
-    if ($("#dlBirthDate"))   $("#dlBirthDate").value = dl.birthDate || "";
-    if ($("#dlExpDate"))     $("#dlExpDate").value = dl.expirationDate || "";
-    if ($("#dlSex"))         $("#dlSex").value = dl.sex || "";
-    if ($("#dlEyeColor"))    $("#dlEyeColor").value = dl.eyeColor || "";
-    if ($("#dlWeight"))      $("#dlWeight").value = dl.weight || "";
-    if ($("#dlAddress"))     $("#dlAddress").value = dl.address || "";
-    if ($("#dlRestrictions")) $("#dlRestrictions").value = dl.restrictions || "";
+    if ($("#dlId"))                   $("#dlId").value = dl.id;
+    if ($("#dl_drivers_license_id"))  $("#dl_drivers_license_id").value = dl.drivers_license_id || "";
+    if ($("#dl_holder_name"))         $("#dl_holder_name").value = dl.holder_name || "";
+    if ($("#dl_birth_date"))          $("#dl_birth_date").value = dl.birth_date || "";
+    if ($("#dl_expiration_date"))     $("#dl_expiration_date").value = dl.expiration_date || "";
+    if ($("#dl_sex"))                 $("#dl_sex").value = dl.sex || "";
+    if ($("#dl_eye_color"))           $("#dl_eye_color").value = dl.eye_color || "";
+    if ($("#dl_weight"))              $("#dl_weight").value = dl.weight || "";
+    if ($("#dl_address"))             $("#dl_address").value = dl.address || "";
+    if ($("#dl_restrictions"))        $("#dl_restrictions").value = dl.restrictions || "";
     toast("Editing license.");
   }
 
@@ -1477,11 +1554,11 @@ $("#ccForm") && $("#ccForm").addEventListener("submit", async (e) => {
   try {
     const cc = {
       id: $("#ccId").value || undefined,
-      customerId: $("#ccCustomer").value,
-      holderName: $("#ccHolderName").value.trim(),
-      last4: $("#ccLast4").value.trim(),
-      expirationDate: $("#ccExpDate").value.trim(),
-      zipCode: $("#ccZip").value.trim()
+      credit_card_number: Number($("#cc_credit_card_number").value),
+      holder_name: $("#cc_holder_name").value.trim(),
+      security_code: Number($("#cc_security_code").value || 0),
+      expiration_date: $("#cc_expiration_date").value.trim(),
+      zip_code: Number($("#cc_zip_code").value || 0)
     };
     upsertCreditCard(cc);
 
@@ -1516,12 +1593,12 @@ $("#ccList") && $("#ccList").addEventListener("click", (e) => {
   if (act === "editCc") {
     const cc = state.creditCards.find(x => x.id === id);
     if (!cc) return;
-    if ($("#ccId"))         $("#ccId").value = cc.id;
-    if ($("#ccCustomer"))   $("#ccCustomer").value = cc.customerId;
-    if ($("#ccHolderName")) $("#ccHolderName").value = cc.holderName;
-    if ($("#ccLast4"))      $("#ccLast4").value = cc.last4;
-    if ($("#ccExpDate"))    $("#ccExpDate").value = cc.expirationDate;
-    if ($("#ccZip"))        $("#ccZip").value = cc.zipCode;
+    if ($("#ccId"))                  $("#ccId").value = cc.id;
+    if ($("#cc_credit_card_number")) $("#cc_credit_card_number").value = cc.credit_card_number || "";
+    if ($("#cc_holder_name"))        $("#cc_holder_name").value = cc.holder_name || "";
+    if ($("#cc_security_code"))      $("#cc_security_code").value = cc.security_code || "";
+    if ($("#cc_expiration_date"))    $("#cc_expiration_date").value = cc.expiration_date || "";
+    if ($("#cc_zip_code"))           $("#cc_zip_code").value = cc.zip_code || "";
     toast("Editing card.");
   }
 
@@ -1554,7 +1631,7 @@ $("#ccList") && $("#ccList").addEventListener("click", (e) => {
   });
 })();
 
-/* ---- DL / CC customer selects: no auto-fill (record details are entered first, customer link is optional) ---- */
+/* ---- DL and CC records are standalone; customers link to them via the customer form ---- */
 
 $("#btnResetAll") && $("#btnResetAll").addEventListener("click", () => {
   if (!confirm("Reset ALL data? This cannot be undone.")) return;
@@ -1620,83 +1697,119 @@ function loadDemoData() {
     { id: uid("veh"), vin: "3CZRU6H52KM000015", make: "Honda",      model: "HR-V Sport",         year: 2022, category: "recreational", condition: "used",     mileage: 16400,  price: 24800,  stock: 2  }, // no sales
   ];
 
-  // ── Customers ──
-  state.customers = [
-    // Friends
-    { id: uid("cust"), first: "Ross",      middle: "", last: "Geller",       address: "15 Grove St, New York, NY",               phone1: "+1 212 555 0181", phone2: "", license: "NY8821456", creditScore: 720, txHistory: [] },
-    { id: uid("cust"), first: "Monica",    middle: "", last: "Geller",       address: "90 Bedford St, New York, NY",             phone1: "+1 212 555 0182", phone2: "", license: "NY8821457", creditScore: 780, txHistory: [] },
-    { id: uid("cust"), first: "Chandler",  middle: "", last: "Bing",         address: "14 Yemen Rd, New York, NY",               phone1: "+1 212 555 0183", phone2: "", license: "NY8821458", creditScore: 695, txHistory: [] },
-    { id: uid("cust"), first: "Joey",      middle: "", last: "Tribbiani",    address: "90 Bedford St Apt 19, New York, NY",      phone1: "+1 212 555 0184", phone2: "", license: "NY8821459", creditScore: 520, txHistory: [] },
-    { id: uid("cust"), first: "Rachel",    middle: "", last: "Green",        address: "495 Grove St, New York, NY",              phone1: "+1 212 555 0185", phone2: "", license: "NY8821460", creditScore: 760, txHistory: [] },
-    { id: uid("cust"), first: "Phoebe",    middle: "", last: "Buffay",       address: "5 Morton St, New York, NY",               phone1: "+1 212 555 0186", phone2: "", license: "NY8821461", creditScore: 610, txHistory: [] },
+  // ── Driver's Licenses and Credit Cards (schema field names; drivers_license_id and credit_card_number are Ints) ──
+  // dlId starts at 1001, ccNum starts at 10001 — both sequential integers
+  const _demoSpecs = [
+    // Friends                                                                                          dlId   ccNum    cvv  ccExp    zip
+    { dlId: 1001, ccNum: 10001, name: "Ross Geller",       dob: "1969-10-18", exp: "2028-10-18", sex: "M", eye: "BRN", wt: 185, addr: "15 Grove St, New York, NY",               cvv: 452, ccExp: "11/28", zip: 10014, phone1: "+1 212 555 0181", score: 720 },
+    { dlId: 1002, ccNum: 10002, name: "Monica Geller",     dob: "1969-04-22", exp: "2028-04-22", sex: "F", eye: "BRN", wt: 125, addr: "90 Bedford St, New York, NY",             cvv: 883, ccExp: "06/27", zip: 10014, phone1: "+1 212 555 0182", score: 780 },
+    { dlId: 1003, ccNum: 10003, name: "Chandler Bing",     dob: "1968-08-19", exp: "2027-08-19", sex: "M", eye: "BLU", wt: 175, addr: "14 Yemen Rd, New York, NY",               cvv: 114, ccExp: "03/26", zip: 10014, phone1: "+1 212 555 0183", score: 695 },
+    { dlId: 1004, ccNum: 10004, name: "Joey Tribbiani",    dob: "1968-01-09", exp: "2027-01-09", sex: "M", eye: "BRN", wt: 180, addr: "90 Bedford St Apt 19, New York, NY",      cvv: 339, ccExp: "09/26", zip: 10014, phone1: "+1 212 555 0184", score: 520 },
+    { dlId: 1005, ccNum: 10005, name: "Rachel Green",      dob: "1969-05-05", exp: "2028-05-05", sex: "F", eye: "GRN", wt: 120, addr: "495 Grove St, New York, NY",              cvv: 774, ccExp: "04/28", zip: 10014, phone1: "+1 212 555 0185", score: 760 },
+    { dlId: 1006, ccNum: 10006, name: "Phoebe Buffay",     dob: "1967-02-16", exp: "2027-02-16", sex: "F", eye: "BLU", wt: 115, addr: "5 Morton St, New York, NY",               cvv: 660, ccExp: "12/26", zip: 10014, phone1: "+1 212 555 0186", score: 610 },
     // HIMYM
-    { id: uid("cust"), first: "Barney",    middle: "", last: "Stinson",      address: "GNB Tower, New York, NY",                 phone1: "+1 212 555 0199", phone2: "", license: "NY9934521", creditScore: 810, txHistory: [] },
-    { id: uid("cust"), first: "Marshall",  middle: "", last: "Eriksen",      address: "2030 Maple Ave, St Paul, MN",             phone1: "+1 651 555 0143", phone2: "", license: "MN4421301", creditScore: 695, txHistory: [] },
-    { id: uid("cust"), first: "Lily",      middle: "", last: "Aldrin",       address: "2030 Maple Ave, St Paul, MN",             phone1: "+1 651 555 0144", phone2: "", license: "MN4421302", creditScore: 710, txHistory: [] },
-    { id: uid("cust"), first: "Ted",       middle: "", last: "Mosby",        address: "214 W 82nd St, New York, NY",             phone1: "+1 614 555 0101", phone2: "", license: "OH5531201", creditScore: 680, txHistory: [] },
-    { id: uid("cust"), first: "Robin",     middle: "", last: "Scherbatsky",  address: "870 5th Ave, New York, NY",               phone1: "+1 604 555 0177", phone2: "", license: "CA7712301", creditScore: 735, txHistory: [] },
+    { dlId: 1007, ccNum: 10007, name: "Barney Stinson",    dob: "1976-05-25", exp: "2029-05-25", sex: "M", eye: "BLU", wt: 180, addr: "GNB Tower, New York, NY",                 cvv: 990, ccExp: "08/29", zip: 10036, phone1: "+1 212 555 0199", score: 810 },
+    { dlId: 1008, ccNum: 10008, name: "Marshall Eriksen",  dob: "1978-01-23", exp: "2027-01-23", sex: "M", eye: "BRN", wt: 195, addr: "2030 Maple Ave, St Paul, MN",             cvv: 225, ccExp: "07/27", zip: 55101, phone1: "+1 651 555 0143", score: 695 },
+    { dlId: 1009, ccNum: 10009, name: "Lily Aldrin",       dob: "1978-03-22", exp: "2027-03-22", sex: "F", eye: "GRN", wt: 120, addr: "2030 Maple Ave, St Paul, MN",             cvv: 448, ccExp: "01/28", zip: 55101, phone1: "+1 651 555 0144", score: 710 },
+    { dlId: 1010, ccNum: 10010, name: "Ted Mosby",         dob: "1978-04-25", exp: "2027-04-25", sex: "M", eye: "BLU", wt: 170, addr: "214 W 82nd St, New York, NY",             cvv: 331, ccExp: "05/27", zip: 10024, phone1: "+1 614 555 0101", score: 680 },
+    { dlId: 1011, ccNum: 10011, name: "Robin Scherbatsky", dob: "1980-06-23", exp: "2028-06-23", sex: "F", eye: "BRN", wt: 118, addr: "870 5th Ave, New York, NY",               cvv: 886, ccExp: "10/28", zip: 10065, phone1: "+1 604 555 0177", score: 735 },
     // One Piece
-    { id: uid("cust"), first: "Monkey D.", middle: "", last: "Luffy",        address: "1 Thousand Sunny Blvd, Los Angeles, CA", phone1: "+1 310 555 0177", phone2: "", license: "EG0000001", creditScore: 540, txHistory: [] },
-    { id: uid("cust"), first: "Roronoa",   middle: "", last: "Zoro",         address: "Dojo District, East Blue, CA",            phone1: "+1 310 555 0178", phone2: "", license: "EG0000002", creditScore: 640, txHistory: [] },
-    { id: uid("cust"), first: "Nami",      middle: "", last: "",             address: "88 Tangerine Grove, Cocoyasi, CA",        phone1: "+1 310 555 0179", phone2: "", license: "EG0000003", creditScore: 750, txHistory: [] },
-    { id: uid("cust"), first: "Usopp",     middle: "", last: "",             address: "1 Syrup Village Rd, Los Angeles, CA",     phone1: "+1 310 555 0180", phone2: "", license: "EG0000004", creditScore: 490, txHistory: [] },
-    { id: uid("cust"), first: "Sanji",     middle: "", last: "",             address: "Baratie Restaurant, Los Angeles, CA",     phone1: "+1 310 555 0181", phone2: "", license: "EG0000005", creditScore: 700, txHistory: [] },
-    { id: uid("cust"), first: "Nico",      middle: "", last: "Robin",        address: "Ohara Archives Ln, Los Angeles, CA",      phone1: "+1 310 555 0182", phone2: "", license: "EG0000006", creditScore: 770, txHistory: [] },
-    { id: uid("cust"), first: "Franky",    middle: "", last: "",             address: "Shipyard Blvd, Water 7, CA",              phone1: "+1 310 555 0183", phone2: "", license: "WG0000007", creditScore: 620, txHistory: [] },
+    { dlId: 1012, ccNum: 10012, name: "Monkey D. Luffy",   dob: "1997-05-05", exp: "2029-05-05", sex: "M", eye: "BLK", wt: 155, addr: "1 Thousand Sunny Blvd, Los Angeles, CA", cvv: 101, ccExp: "05/29", zip: 90001, phone1: "+1 310 555 0177", score: 540 },
+    { dlId: 1013, ccNum: 10013, name: "Roronoa Zoro",      dob: "1995-11-11", exp: "2028-11-11", sex: "M", eye: "BLK", wt: 185, addr: "Dojo District, East Blue, CA",            cvv: 102, ccExp: "11/28", zip: 90002, phone1: "+1 310 555 0178", score: 640 },
+    { dlId: 1014, ccNum: 10014, name: "Nami",              dob: "1997-07-03", exp: "2029-07-03", sex: "F", eye: "BRN", wt: 110, addr: "88 Tangerine Grove, Cocoyasi, CA",        cvv: 103, ccExp: "07/29", zip: 90003, phone1: "+1 310 555 0179", score: 750 },
+    { dlId: 1015, ccNum: 10015, name: "Usopp",             dob: "1997-04-01", exp: "2029-04-01", sex: "M", eye: "BRN", wt: 130, addr: "1 Syrup Village Rd, Los Angeles, CA",     cvv: 104, ccExp: "04/29", zip: 90004, phone1: "+1 310 555 0180", score: 490 },
+    { dlId: 1016, ccNum: 10016, name: "Sanji",             dob: "1996-03-02", exp: "2028-03-02", sex: "M", eye: "GRY", wt: 165, addr: "Baratie Restaurant, Los Angeles, CA",     cvv: 105, ccExp: "03/28", zip: 90005, phone1: "+1 310 555 0181", score: 700 },
+    { dlId: 1017, ccNum: 10017, name: "Nico Robin",        dob: "1990-02-06", exp: "2027-02-06", sex: "F", eye: "BLU", wt: 112, addr: "Ohara Archives Ln, Los Angeles, CA",      cvv: 106, ccExp: "02/27", zip: 90006, phone1: "+1 310 555 0182", score: 770 },
+    { dlId: 1018, ccNum: 10018, name: "Franky",            dob: "1988-03-09", exp: "2027-03-09", sex: "M", eye: "BLU", wt: 220, addr: "Shipyard Blvd, Water 7, CA",              cvv: 107, ccExp: "03/27", zip: 90007, phone1: "+1 310 555 0183", score: 620 },
     // JJK
-    { id: uid("cust"), first: "Yuji",      middle: "", last: "Itadori",      address: "Jujutsu High, Tokyo Block, SF, CA",       phone1: "+1 415 555 0122", phone2: "", license: "TK1100001", creditScore: 590, txHistory: [] },
-    { id: uid("cust"), first: "Megumi",    middle: "", last: "Fushiguro",    address: "Zenin Estate Dr, SF, CA",                 phone1: "+1 415 555 0123", phone2: "", license: "TK1100002", creditScore: 670, txHistory: [] },
-    { id: uid("cust"), first: "Nobara",    middle: "", last: "Kugisaki",     address: "Harajuku Ave, SF, CA",                    phone1: "+1 415 555 0124", phone2: "", license: "TK1100003", creditScore: 610, txHistory: [] },
-    { id: uid("cust"), first: "Satoru",    middle: "", last: "Gojo",         address: "Infinity Tower, SF, CA",                  phone1: "+1 415 555 0125", phone2: "", license: "TK1100004", creditScore: 850, txHistory: [] },
-    { id: uid("cust"), first: "Suguru",    middle: "", last: "Geto",         address: "Occult Circle, SF, CA",                   phone1: "+1 415 555 0126", phone2: "", license: "TK1100005", creditScore: 730, txHistory: [] },
+    { dlId: 1019, ccNum: 10019, name: "Yuji Itadori",      dob: "2003-03-20", exp: "2027-03-20", sex: "M", eye: "BRN", wt: 176, addr: "Jujutsu High, Tokyo Block, SF, CA",       cvv: 201, ccExp: "03/27", zip: 94102, phone1: "+1 415 555 0122", score: 590 },
+    { dlId: 1020, ccNum: 10020, name: "Megumi Fushiguro",  dob: "2003-12-22", exp: "2027-12-22", sex: "M", eye: "BLU", wt: 165, addr: "Zenin Estate Dr, SF, CA",                 cvv: 202, ccExp: "12/27", zip: 94103, phone1: "+1 415 555 0123", score: 670 },
+    { dlId: 1021, ccNum: 10021, name: "Nobara Kugisaki",   dob: "2003-08-07", exp: "2027-08-07", sex: "F", eye: "BRN", wt: 108, addr: "Harajuku Ave, SF, CA",                    cvv: 203, ccExp: "08/27", zip: 94104, phone1: "+1 415 555 0124", score: 610 },
+    { dlId: 1022, ccNum: 10022, name: "Satoru Gojo",       dob: "1989-12-07", exp: "2028-12-07", sex: "M", eye: "BLU", wt: 176, addr: "Infinity Tower, SF, CA",                  cvv: 204, ccExp: "12/28", zip: 94105, phone1: "+1 415 555 0125", score: 850 },
+    { dlId: 1023, ccNum: 10023, name: "Suguru Geto",       dob: "1989-02-03", exp: "2028-02-03", sex: "M", eye: "BLK", wt: 170, addr: "Occult Circle, SF, CA",                   cvv: 205, ccExp: "02/28", zip: 94106, phone1: "+1 415 555 0126", score: 730 },
     // Naruto
-    { id: uid("cust"), first: "Naruto",    middle: "", last: "Uzumaki",      address: "1 Hokage Rock Rd, Portland, OR",          phone1: "+1 503 555 0001", phone2: "", license: "KN0000001", creditScore: 580, txHistory: [] },
-    { id: uid("cust"), first: "Sasuke",    middle: "", last: "Uchiha",       address: "Uchiha District, Portland, OR",           phone1: "+1 503 555 0002", phone2: "", license: "KN0000002", creditScore: 720, txHistory: [] },
-    { id: uid("cust"), first: "Sakura",    middle: "", last: "Haruno",       address: "7 Medical Ninja Way, Portland, OR",       phone1: "+1 503 555 0003", phone2: "", license: "KN0000003", creditScore: 690, txHistory: [] },
+    { dlId: 1024, ccNum: 10024, name: "Naruto Uzumaki",    dob: "1999-10-10", exp: "2027-10-10", sex: "M", eye: "BLU", wt: 162, addr: "1 Hokage Rock Rd, Portland, OR",          cvv: 301, ccExp: "10/27", zip: 97201, phone1: "+1 503 555 0001", score: 580 },
+    { dlId: 1025, ccNum: 10025, name: "Sasuke Uchiha",     dob: "1999-07-23", exp: "2027-07-23", sex: "M", eye: "BLK", wt: 165, addr: "Uchiha District, Portland, OR",           cvv: 302, ccExp: "07/27", zip: 97202, phone1: "+1 503 555 0002", score: 720 },
+    { dlId: 1026, ccNum: 10026, name: "Sakura Haruno",     dob: "1999-03-28", exp: "2027-03-28", sex: "F", eye: "GRN", wt: 110, addr: "7 Medical Ninja Way, Portland, OR",       cvv: 303, ccExp: "03/27", zip: 97203, phone1: "+1 503 555 0003", score: 690 },
     // Attack on Titan
-    { id: uid("cust"), first: "Eren",      middle: "", last: "Yeager",       address: "Wall Maria St, Seattle, WA",              phone1: "+1 206 555 0001", phone2: "", license: "PM0000001", creditScore: 550, txHistory: [] },
-    { id: uid("cust"), first: "Mikasa",    middle: "", last: "Ackerman",     address: "Scout Regiment Ave, Seattle, WA",         phone1: "+1 206 555 0002", phone2: "", license: "PM0000002", creditScore: 740, txHistory: [] },
-    { id: uid("cust"), first: "Armin",     middle: "", last: "Arlert",       address: "104th Corps Blvd, Seattle, WA",           phone1: "+1 206 555 0003", phone2: "", license: "PM0000003", creditScore: 700, txHistory: [] },
-    { id: uid("cust"), first: "Levi",      middle: "", last: "Ackerman",     address: "1 Special Ops Tower, Seattle, WA",        phone1: "+1 206 555 0004", phone2: "", license: "PM0000004", creditScore: 800, txHistory: [] },
+    { dlId: 1027, ccNum: 10027, name: "Eren Yeager",       dob: "2003-03-30", exp: "2027-03-30", sex: "M", eye: "GRN", wt: 170, addr: "Wall Maria St, Seattle, WA",              cvv: 401, ccExp: "03/27", zip: 98101, phone1: "+1 206 555 0001", score: 550 },
+    { dlId: 1028, ccNum: 10028, name: "Mikasa Ackerman",   dob: "2003-02-10", exp: "2027-02-10", sex: "F", eye: "BLK", wt: 130, addr: "Scout Regiment Ave, Seattle, WA",         cvv: 402, ccExp: "02/27", zip: 98102, phone1: "+1 206 555 0002", score: 740 },
+    { dlId: 1029, ccNum: 10029, name: "Armin Arlert",      dob: "2003-11-03", exp: "2027-11-03", sex: "M", eye: "BLU", wt: 145, addr: "104th Corps Blvd, Seattle, WA",           cvv: 403, ccExp: "11/27", zip: 98103, phone1: "+1 206 555 0003", score: 700 },
+    { dlId: 1030, ccNum: 10030, name: "Levi Ackerman",     dob: "1990-12-25", exp: "2028-12-25", sex: "M", eye: "GRY", wt: 160, addr: "1 Special Ops Tower, Seattle, WA",        cvv: 404, ccExp: "12/28", zip: 98104, phone1: "+1 206 555 0004", score: 800 },
   ];
+
+  state.driverLicenses = _demoSpecs.map(s => ({
+    id: uid("dl"),
+    drivers_license_id: s.dlId,
+    holder_name: s.name,
+    birth_date: s.dob,
+    expiration_date: s.exp,
+    sex: s.sex,
+    eye_color: s.eye,
+    weight: s.wt,
+    address: s.addr,
+    restrictions: "None"
+  }));
+
+  state.creditCards = _demoSpecs.map(s => ({
+    id: uid("cc"),
+    credit_card_number: s.ccNum,
+    holder_name: s.name,
+    security_code: s.cvv,
+    expiration_date: s.ccExp,
+    zip_code: s.zip
+  }));
+
+  // ── Customers (schema field names; linked by Int FKs) ──
+  state.customers = _demoSpecs.map(s => ({
+    customer_id: uid("cust"),
+    customer_name: s.name,
+    address: s.addr,
+    phone1: s.phone1,
+    phone2: "",
+    credit_score: s.score,
+    drivers_license_id: s.dlId,
+    credit_card_number: s.ccNum,
+    txHistory: []
+  }));
 
   state.settings = { discountRule: { ...DEFAULT_DISCOUNT_RULE } };
 
-  // Helper: find customer ID by license number
-  const cId = (lic) => state.customers.find(c => c.license === lic)?.id;
+  // Helper: find customer_id by drivers_license_id (Int)
+  const cId = (dlId) => state.customers.find(c => c.drivers_license_id === dlId)?.customer_id;
 
   // ── Transactions ── spread Sept 2025 → Mar 2026 for chart data
   const demoTxs = [
     // Sep 2025
-    { type: "purchase", date: "2025-09-04", customerId: cId("NY9934521"), salesperson: "ted_mosby",    vehicleVinBuy: "JH4KA7650MC000001", priceOverrideUSD: 112000, tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-09-18", customerId: cId("NY8821456"), salesperson: "rachel_green", vehicleVinBuy: "1HGCM82633A000002", priceOverrideUSD: 23800,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-09-04", customerId: cId(1007), salesperson: "ted_mosby",    vehicleVinBuy: "JH4KA7650MC000001", priceOverrideUSD: 112000, tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-09-18", customerId: cId(1001), salesperson: "rachel_green", vehicleVinBuy: "1HGCM82633A000002", priceOverrideUSD: 23800,  tradeInValueUSD: 0,     tradeIn: null },
     // Oct 2025
-    { type: "purchase", date: "2025-10-02", customerId: cId("PM0000004"), salesperson: "chandler_bing",vehicleVinBuy: "WBS8M9C50J5J00004", priceOverrideUSD: 58900,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-10-15", customerId: cId("TK1100004"), salesperson: "ted_mosby",    vehicleVinBuy: "WDDUG8CB4EA000010", priceOverrideUSD: 94000,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-10-28", customerId: cId("PM0000002"), salesperson: "rachel_green", vehicleVinBuy: "5YJSA1E26MF000006", priceOverrideUSD: 71000,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-10-02", customerId: cId(1030), salesperson: "chandler_bing",vehicleVinBuy: "WBS8M9C50J5J00004", priceOverrideUSD: 58900,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-10-15", customerId: cId(1022), salesperson: "ted_mosby",    vehicleVinBuy: "WDDUG8CB4EA000010", priceOverrideUSD: 94000,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-10-28", customerId: cId(1028), salesperson: "rachel_green", vehicleVinBuy: "5YJSA1E26MF000006", priceOverrideUSD: 71000,  tradeInValueUSD: 0,     tradeIn: null },
     // Nov 2025
-    { type: "purchase", date: "2025-11-05", customerId: cId("CA7712301"), salesperson: "chandler_bing",vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 35900,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-11-14", customerId: cId("KN0000002"), salesperson: "ted_mosby",    vehicleVinBuy: "JN1AZ4EH4FM000011", priceOverrideUSD: 98500,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-11-22", customerId: cId("EG0000006"), salesperson: "rachel_green", vehicleVinBuy: "1FM5K8GC1LGB00009", priceOverrideUSD: 37200,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-11-05", customerId: cId(1011), salesperson: "chandler_bing",vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 35900,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-11-14", customerId: cId(1025), salesperson: "ted_mosby",    vehicleVinBuy: "JN1AZ4EH4FM000011", priceOverrideUSD: 98500,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-11-22", customerId: cId(1017), salesperson: "rachel_green", vehicleVinBuy: "1FM5K8GC1LGB00009", priceOverrideUSD: 37200,  tradeInValueUSD: 0,     tradeIn: null },
     // Dec 2025
-    { type: "purchase", date: "2025-12-03", customerId: cId("MN4421301"), salesperson: "chandler_bing",vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 36000,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "tradein",  date: "2025-12-11", customerId: cId("KN0000001"), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 57000,  tradeInValueUSD: 12000,
+    { type: "purchase", date: "2025-12-03", customerId: cId(1008), salesperson: "chandler_bing",vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 36000,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "tradein",  date: "2025-12-11", customerId: cId(1024), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 57000,  tradeInValueUSD: 12000,
       tradeIn: { make: "Jeep", model: "Wrangler", year: 2016, mileage: 88000, estimatedResaleUSD: 12000 } },
-    { type: "purchase", date: "2025-12-19", customerId: cId("EG0000003"), salesperson: "rachel_green", vehicleVinBuy: "1HGCM82633A000002", priceOverrideUSD: 24200,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-12-19", customerId: cId(1014), salesperson: "rachel_green", vehicleVinBuy: "1HGCM82633A000002", priceOverrideUSD: 24200,  tradeInValueUSD: 0,     tradeIn: null },
     // Jan 2026
-    { type: "purchase", date: "2026-01-07", customerId: cId("TK1100002"), salesperson: "chandler_bing",vehicleVinBuy: "3VWF17AT1DM000007", priceOverrideUSD: 17500,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2026-01-15", customerId: cId("NY8821457"), salesperson: "rachel_green", vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 35900,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2026-01-24", customerId: cId("EG0000005"), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 55500,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-01-07", customerId: cId(1020), salesperson: "chandler_bing",vehicleVinBuy: "3VWF17AT1DM000007", priceOverrideUSD: 17500,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-01-15", customerId: cId(1002), salesperson: "rachel_green", vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 35900,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-01-24", customerId: cId(1016), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 55500,  tradeInValueUSD: 0,     tradeIn: null },
     // Feb 2026
-    { type: "tradein",  date: "2026-02-03", customerId: cId("PM0000003"), salesperson: "chandler_bing",vehicleVinBuy: "KNDJN2A24G7000014", priceOverrideUSD: 22100,  tradeInValueUSD: 5500,
+    { type: "tradein",  date: "2026-02-03", customerId: cId(1029), salesperson: "chandler_bing",vehicleVinBuy: "KNDJN2A24G7000014", priceOverrideUSD: 22100,  tradeInValueUSD: 5500,
       tradeIn: { make: "Toyota", model: "Corolla", year: 2014, mileage: 74000, estimatedResaleUSD: 5500 } },
-    { type: "purchase", date: "2026-02-12", customerId: cId("MN4421302"), salesperson: "rachel_green", vehicleVinBuy: "1FM5K8GC1LGB00009", priceOverrideUSD: 38200,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2026-02-20", customerId: cId("EG0000004"), salesperson: "chandler_bing",vehicleVinBuy: "KNDJN2A24G7000014", priceOverrideUSD: 21500,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-02-12", customerId: cId(1009), salesperson: "rachel_green", vehicleVinBuy: "1FM5K8GC1LGB00009", priceOverrideUSD: 38200,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-02-20", customerId: cId(1015), salesperson: "chandler_bing",vehicleVinBuy: "KNDJN2A24G7000014", priceOverrideUSD: 21500,  tradeInValueUSD: 0,     tradeIn: null },
     // Mar 2026
-    { type: "tradein",  date: "2026-03-10", customerId: cId("TK1100001"), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 57000,  tradeInValueUSD: 9500,
+    { type: "tradein",  date: "2026-03-10", customerId: cId(1019), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 57000,  tradeInValueUSD: 9500,
       tradeIn: { make: "Dodge", model: "Charger", year: 2018, mileage: 62000, estimatedResaleUSD: 9500 } },
-    { type: "purchase", date: "2026-03-14", customerId: cId("NY8821457"), salesperson: "rachel_green", vehicleVinBuy: "2C3CCAGG4FH000013", priceOverrideUSD: 31900,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2026-03-15", customerId: cId("EG0000001"), salesperson: "ted_mosby",    vehicleVinBuy: "3VWF17AT1DM000007", priceOverrideUSD: 17500,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-03-14", customerId: cId(1002), salesperson: "rachel_green", vehicleVinBuy: "2C3CCAGG4FH000013", priceOverrideUSD: 31900,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-03-15", customerId: cId(1012), salesperson: "ted_mosby",    vehicleVinBuy: "3VWF17AT1DM000007", priceOverrideUSD: 17500,  tradeInValueUSD: 0,     tradeIn: null },
   ];
 
   for (const txInput of demoTxs) {
@@ -1741,11 +1854,14 @@ rerenderAll();
   if (!editId || !$("#employeeForm")) return;
   var emp = state && state.employees && state.employees.find(function(x) { return x.id === editId; });
   if (!emp) return;
-  if ($("#employeeId"))    $("#employeeId").value = emp.id;
-  if ($("#empName"))       $("#empName").value = emp.name;
-  if ($("#empUsername"))   $("#empUsername").value = emp.username;
-  if ($("#empRole"))       $("#empRole").value = emp.role;
-  if ($("#empDepartment")) $("#empDepartment").value = emp.department || "";
+  if ($("#employeeId"))        $("#employeeId").value = emp.id;
+  if ($("#emp_employee_name")) $("#emp_employee_name").value = emp.employee_name || emp.name || "";
+  if ($("#emp_employee_id"))   $("#emp_employee_id").value = emp.employee_id != null ? emp.employee_id : "";
+  if ($("#empUsername"))       $("#empUsername").value = emp.username || "";
+  if ($("#empRole"))           $("#empRole").value = emp.role || "salesperson";
+  if ($("#empDepartment"))     $("#empDepartment").value = emp.department || "";
+  if ($("#emp_manager"))       $("#emp_manager").value = emp.manager != null ? emp.manager : "";
+  if ($("#emp_commission"))    $("#emp_commission").value = emp.commission != null ? emp.commission : "";
 })();
 
 // Staggered stat card entrance when arriving from login

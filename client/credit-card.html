@@ -54,7 +54,7 @@
       <div class="page-hero hero-indigo">
         <div class="page-hero-tag">Records</div>
         <h1>Credit Cards</h1>
-        <p>Record payment card details and optionally link each card to a customer profile.</p>
+        <p>Create and manage credit card records. Link cards to customers from the Customer form.</p>
       </div>
 
       <div class="panel">
@@ -62,19 +62,18 @@
 
           <div class="card accent-border">
             <h2>Add / Edit Card</h2>
-            <p class="muted small" style="margin-bottom:16px">Enter the card details, then optionally assign the record to a customer. Only the last 4 digits are stored for security.</p>
+            <p class="muted small" style="margin-bottom:16px">Enter the card details. To link this card to a customer, use the Customer form.</p>
             <form id="ccForm" class="form">
               <input id="ccId" type="hidden" />
               <div class="grid two tight">
-                <label>Name on card<input id="ccHolderName" required placeholder="Jane M. Smith" /></label>
-                <label>Last 4 digits<input id="ccLast4" required maxlength="4" pattern="\d{4}" placeholder="4242" /></label>
+                <label>Card number <span class="muted small">(credit_card_number)</span><input id="cc_credit_card_number" type="number" min="1" step="1" required placeholder="4111111111111111" /></label>
+                <label>Name on card <span class="muted small">(holder_name)</span><input id="cc_holder_name" required placeholder="Jane M. Smith" /></label>
               </div>
-              <div class="grid two tight">
-                <label>Expiration (MM/YY)<input id="ccExpDate" required placeholder="12/28" /></label>
-                <label>Billing zip code<input id="ccZip" required placeholder="10001" /></label>
+              <div class="grid three tight">
+                <label>Security code <span class="muted small">(security_code)</span><input id="cc_security_code" type="number" min="0" step="1" required placeholder="123" /></label>
+                <label>Expiration <span class="muted small">(expiration_date)</span><input id="cc_expiration_date" required placeholder="12/28" /></label>
+                <label>Billing zip <span class="muted small">(zip_code)</span><input id="cc_zip_code" type="number" min="0" step="1" required placeholder="10001" /></label>
               </div>
-              <div class="form-section-label" style="margin-top:8px">Link to customer</div>
-              <label>Customer <span class="muted small">(optional)</span><select id="ccCustomer"><option value="">— none —</option></select></label>
               <div class="row" style="margin-top:4px">
                 <button class="btn primary" type="submit">
                   <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="1" y="3.5" width="13" height="8" rx="1.5"/><path d="M1 6.5h13"/></svg>

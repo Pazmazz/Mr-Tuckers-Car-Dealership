@@ -50,14 +50,14 @@
       <div class="topbar-profile-chip" id="topbarProfile"><div class="topbar-avatar" id="topbarAvatarEl">?</div><div><div class="topbar-profile-name" id="topbarUsername">Me</div><div class="topbar-profile-role" id="topbarRole">Guest</div></div></div>
       <button id="btnTheme" class="btn-icon" type="button" aria-label="Toggle theme"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 7.5a5.5 5.5 0 0 0 9.9 3.28A5.5 5.5 0 0 1 6.22 1.1 5.5 5.5 0 0 0 2 7.5z"/></svg></button>
       <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
-      <button class="btn primary sm" onclick="document.getElementById('custFirst').focus()">+ Add customer</button>
+      <button class="btn primary sm" onclick="document.getElementById('cust_customer_name').focus()">+ Add customer</button>
     </header>
 
     <main class="content">
       <div class="page-hero hero-green">
         <div class="page-hero-tag">Main</div>
         <h1>Customers</h1>
-        <p>Manage customer profiles. Add driver's licenses and payment cards via the Records section.</p>
+        <p>Manage customer profiles. Each customer must be linked to an existing driver's license and credit card record.</p>
       </div>
 
       <div class="panel">
@@ -68,11 +68,7 @@
             <form id="customerForm" class="form">
               <input id="customerId" type="hidden" />
               <div class="form-section-label">Identity</div>
-              <div class="grid three tight">
-                <label>First name<input id="custFirst" required placeholder="Jane" /></label>
-                <label>Middle initial<input id="custMiddle" maxlength="1" placeholder="M" /></label>
-                <label>Last name<input id="custLast" required placeholder="Smith" /></label>
-              </div>
+              <label>Customer name <span class="muted small">(customer_name)</span><input id="cust_customer_name" required placeholder="Jane M. Smith" /></label>
               <div class="form-section-label">Contact</div>
               <label>Address<input id="custAddress" required placeholder="Street, City, State / Region" /></label>
               <div class="grid two tight">
@@ -80,15 +76,15 @@
                 <label>Phone 2 (optional)<input id="custPhone2" placeholder="+1 555 987 6543" /></label>
               </div>
               <div class="form-section-label">Finance</div>
-              <div class="grid two tight">
-                <label>Driver's license #<input id="custLicense" required placeholder="DL1234567" /></label>
-                <label>Credit score (0–850)<input id="custCredit" type="number" min="0" max="850" required placeholder="720" /></label>
-              </div>
+              <label>Credit score 0–850 <span class="muted small">(credit_score)</span><input id="cust_credit_score" type="number" min="0" max="850" required placeholder="720" /></label>
+              <div class="form-section-label">Linked Records</div>
+              <label>Link Driver's License <span class="muted small">(drivers_license_id — required)</span><select id="cust_drivers_license_id" required><option value="">— select a driver's license —</option></select></label>
+              <label>Link Credit Card <span class="muted small">(credit_card_number — required)</span><select id="cust_credit_card_number" required><option value="">— select a credit card —</option></select></label>
               <div class="row" style="margin-top:4px">
                 <button class="btn primary" type="submit">Save customer</button>
                 <button class="btn" type="button" id="btnCustomerReset">Clear</button>
               </div>
-              <p class="muted small">Customer must have a valid license on file to purchase.</p>
+              <p class="muted small">Create driver's license and credit card records first, then link them here.</p>
             </form>
           </div>
 
@@ -105,7 +101,7 @@
 
         <div class="card">
           <h2>Related Records</h2>
-          <p class="muted small" style="margin-bottom:16px">Driver's licenses and credit cards are managed as standalone records and can be linked to a customer from their respective pages.</p>
+          <p class="muted small" style="margin-bottom:16px">Create driver's license and credit card records as standalone entries first, then link them to a customer using the dropdowns in the form above.</p>
           <div class="row">
             <a class="btn" href="driver-license.html">
               <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="3" width="12" height="9" rx="1.5"/><path d="M4 6.5h3M4 9h2M9.5 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>
