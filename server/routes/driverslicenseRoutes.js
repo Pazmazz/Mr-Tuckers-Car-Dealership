@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const prisma = require('../prisma/prisma');
+const prisma = require('../../prisma/prisma');
 
 // Get all driver's licenses
 router.get('/', async (req, res) => {

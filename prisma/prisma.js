@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { PrismaClient } = require('./generated/prisma')
+const { PrismaClient } = require('../generated/prisma')
 const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3')
 
 const adapter = new PrismaBetterSqlite3({

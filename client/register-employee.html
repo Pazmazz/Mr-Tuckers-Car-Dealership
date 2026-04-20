@@ -72,27 +72,20 @@
             <h2>Employee Details</h2>
             <p class="muted small" style="margin-bottom:14px">Fill in the fields below to register or update a team member.</p>
             <form id="employeeForm" class="form">
-              <input id="employeeId" type="hidden" />
+              <input id="emp_employee_id" type="hidden" />
               <div class="form-section-label">Identity</div>
-              <div class="grid two tight">
-                <label>Employee ID <span class="muted small">(employee_id)</span><input id="emp_employee_id" type="number" min="1" step="1" required placeholder="101" /></label>
-                <label>Employee name <span class="muted small">(employee_name)</span><input id="emp_employee_name" required placeholder="Jane Smith" /></label>
-              </div>
-              <div class="grid two tight">
-                <label>Username <span class="muted small">(login)</span><input id="empUsername" required placeholder="jane_smith" /></label>
-                <label>Role <span class="muted small">(access level)</span>
-                  <select id="empRole" required>
-                    <option value="salesperson">Salesperson</option>
-                    <option value="manager">Manager</option>
-                    <option value="finance">Finance</option>
-                    <option value="service">Service</option>
+              <div class="grid two tight">               
+                <label>Employee name<input id="emp_employee_name" required placeholder="Jane Smith" /></label>
+                <label>Role 
+                  <select id="emp_manager" required>
+                    <option value="0">Salesperson</option>
+                    <option value="1">Manager</option>
                   </select>
                 </label>
               </div>
               <div class="form-section-label">Department &amp; Reporting</div>
               <div class="grid three tight">
                 <label>Department <span class="muted small">(department)</span><input id="empDepartment" placeholder="Sales" /></label>
-                <label>Manager ID <span class="muted small">(manager)</span><input id="emp_manager" type="number" min="0" step="1" placeholder="0" /></label>
                 <label>Commission % <span class="muted small">(commission)</span><input id="emp_commission" type="number" min="0" step="1" placeholder="5" /></label>
               </div>
               <div class="row" style="margin-top:4px">
@@ -122,20 +115,6 @@
                   <div class="muted small">Full system access including Analytics and staff management.</div>
                 </div>
                 <span class="badge" style="background:var(--ok-soft);color:var(--ok);border-color:rgba(21,128,61,0.22)">Admin</span>
-              </div>
-              <div class="tier-row">
-                <div class="tier-row-info">
-                  <div class="tier-row-title">Finance</div>
-                  <div class="muted small">Manages payment processing and customer credit evaluations.</div>
-                </div>
-                <span class="badge" style="background:var(--warn-soft);color:var(--warn);border-color:rgba(180,83,9,0.22)">Finance</span>
-              </div>
-              <div class="tier-row">
-                <div class="tier-row-info">
-                  <div class="tier-row-title">Service</div>
-                  <div class="muted small">Handles vehicle servicing, maintenance, and trade-in assessments.</div>
-                </div>
-                <span class="badge">Service</span>
               </div>
             </div>
           </div>

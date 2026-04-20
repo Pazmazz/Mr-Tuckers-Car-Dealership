@@ -251,7 +251,6 @@ function deleteCustomer(customer_id) {
 
 function upsertEmployee(emp) {
   if (!emp.employee_name || !emp.employee_name.trim()) throw new Error("Employee name is required.");
-  if (!emp.username || !emp.username.trim()) throw new Error("Username is required.");
   const id = emp.id || uid("emp");
   const record = {
     ...emp,
@@ -261,7 +260,6 @@ function upsertEmployee(emp) {
     department: emp.department || "",
     manager: emp.manager ? Number(emp.manager) : 0,
     commission: emp.commission ? Number(emp.commission) : 0,
-    username: emp.username.trim(),
     name: emp.employee_name.trim(),
     initials: emp.employee_name.trim().split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
     online: emp.online ?? false
@@ -796,7 +794,7 @@ function renderEmployeesPage() {
 
   wrap.innerHTML = `
     <table aria-label="Employees">
-      <thead><tr><th>employee_name</th><th>employee_id</th><th>Username</th><th>Role</th><th>Department</th><th>manager</th><th>commission</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>employee_name</th><th>employee_id</th><th>Department</th><th>manager</th><th>commission</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
         ${allEmployees.map(e => {
           const displayName = e.employee_name || e.name || "—";
@@ -805,8 +803,6 @@ function renderEmployeesPage() {
           <tr>
             <td><span class="emp-row-avatar">${escapeHtml(initials)}</span>${escapeHtml(displayName)}</td>
             <td class="mono">${escapeHtml(e.employee_id != null ? e.employee_id : "—")}</td>
-            <td class="mono">${escapeHtml(e.username || "—")}</td>
-            <td>${escapeHtml(e.role)}</td>
             <td>${escapeHtml(e.department || "—")}</td>
             <td class="mono">${escapeHtml(e.manager != null ? e.manager : "—")}</td>
             <td class="mono">${escapeHtml(e.commission != null ? e.commission + "%" : "—")}</td>
@@ -1056,12 +1052,20 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
     upsertCustomer(c);
 
     // Add form data into prisma
-    await apiPost("customers", {
-      customer_name:      `${c.first} ${c.middle ? c.middle + " " : ""}${c.last}`.trim(),
-      credit_score:       c.creditScore,
-      drivers_license_id: Number(c.license),
-      credit_card_number: 0        
+    const saved = await apiPost("customers", {
+      customer_name: c.customer_name,
+      credit_score: c.credit_score,
+      address: c.address,
+      phone: c.phone1,
+      drivers_license_id: c.drivers_license_id,
+      credit_card_number: c.credit_card_number        
     });
+
+    const idx = state.customers.findIndex(cu => cu.drivers_license_id === c.drivers_license_id);
+    if (idx >= 0 && saved?.customer_id) {
+      state.customers[idx].customer_id = saved.customer_id;
+      saveState();
+    }
 
     toast("Customer saved.");
     $("#customerForm").reset();
@@ -1082,12 +1086,12 @@ $("#customerFilter") && $("#customerFilter").addEventListener("input", renderCus
 $("#customerList") && $("#customerList").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
-
+  
   const act = btn.dataset.act;
   const id = btn.dataset.id;
 
   if (act === "editCustomer") {
-    const c = state.customers.find(x => x.customer_id === id);
+    const c = state.customers.find(x => x.customer_id === Number(id));
     if (!c) return;
     $("#customerId").value = c.customer_id || "";
     if ($("#cust_customer_name")) $("#cust_customer_name").value = c.customer_name || "";
@@ -1101,10 +1105,12 @@ $("#customerList") && $("#customerList").addEventListener("click", async (e) => 
   }
 
   if (act === "delCustomer") {
-    deleteCustomer(id);
+    const c = state.customers.find(x => x.customer_id === Number(id));
+    if (!c) return;
+    deleteCustomer(Number(id));
 
     // Delete form data from prisma
-    await apiDelete(`customers/${customerId}`);
+    await apiDelete(`customers/${c.customer_id}`);
 
     toast("Customer deleted.");
     rerenderAll();
@@ -1414,23 +1420,34 @@ function renderDcQuotes() {
 
 /* ---- Employee form ---- */
 
-$("#employeeForm") && $("#employeeForm").addEventListener("submit", (e) => {
+$("#employeeForm") && $("#employeeForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
     const emp = {
-      id: $("#employeeId").value || undefined,
       employee_id: Number($("#emp_employee_id").value) || undefined,
       employee_name: $("#emp_employee_name").value.trim(),
-      username: $("#empUsername").value.trim(),
-      role: $("#empRole").value,
       department: $("#empDepartment").value.trim(),
       manager: Number($("#emp_manager").value) || 0,
       commission: Number($("#emp_commission").value) || 0
     };
     upsertEmployee(emp);
+
+    const saved = await apiPost("register-employee", {
+      employee_name: emp.employee_name,
+      department: emp.department,
+      manager: emp.manager,
+      commission: emp.commission
+    });
+
+    const idx = state.employees.findIndex(cu => cu.employee_name === emp.employee_name);
+    if (idx >= 0 && saved?.employee_id) {
+      state.employees[idx].employee_id = saved.employee_id;
+      saveState();
+    }
+
     toast("Employee registered.");
     $("#employeeForm").reset();
-    $("#employeeId").value = "";
+    $("#emp_employee_id").value = "";
     rerenderAll();
   } catch (err) {
     toast(err.message || "Failed to register employee.");
@@ -1442,21 +1459,19 @@ $("#btnEmpReset") && $("#btnEmpReset").addEventListener("click", () => {
   if ($("#employeeId")) $("#employeeId").value = "";
 });
 
-$("#employeesTable") && $("#employeesTable").addEventListener("click", (e) => {
+$("#employeesTable") && $("#employeesTable").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
   const act = btn.dataset.act;
   const id  = btn.dataset.id;
 
   if (act === "editEmp") {
-    const emp = state.employees.find(x => x.id === id);
+    const emp = state.employees.find(x => x.employee_id === Number(id));
     if (!emp) return;
     if ($("#employeeId")) {
       $("#employeeId").value = emp.id;
       if ($("#emp_employee_name")) $("#emp_employee_name").value = emp.employee_name || emp.name || "";
       if ($("#emp_employee_id"))   $("#emp_employee_id").value = emp.employee_id != null ? emp.employee_id : "";
-      if ($("#empUsername"))       $("#empUsername").value = emp.username || "";
-      if ($("#empRole"))           $("#empRole").value = emp.role || "salesperson";
       if ($("#empDepartment"))     $("#empDepartment").value = emp.department || "";
       if ($("#emp_manager"))       $("#emp_manager").value = emp.manager != null ? emp.manager : "";
       if ($("#emp_commission"))    $("#emp_commission").value = emp.commission != null ? emp.commission : "";
@@ -1467,7 +1482,12 @@ $("#employeesTable") && $("#employeesTable").addEventListener("click", (e) => {
   }
 
   if (act === "delEmp") {
+    const emp = state.employees.find(x => x.employee_id === Number(id));
+    if (!emp) return;
     deleteEmployee(id);
+
+    await apiDelete(`register-employee/${emp.employee_id}`);
+    
     toast("Employee removed.");
     rerenderAll();
   }
@@ -1493,15 +1513,15 @@ $("#dlForm") && $("#dlForm").addEventListener("submit", async (e) => {
     upsertDriverLicense(dl);
 
     await apiPost("driver-license", {
-      drivers_license_id: licenseNo,
-      holder_name : holderName,
-      expiration_date: expirationDate,
-      address: address,
-      birth_date: birthDate,
-      sex: sex,
-      eye_color: eyeColor,
-      weight: weight,
-      restrictions: restrictions
+      drivers_license_id: dl.drivers_license_id,
+      holder_name : dl.holder_name,
+      expiration_date: dl.expiration_date,
+      address: dl.address,
+      birth_date: dl.birth_date,
+      sex: dl.sex,
+      eye_color: dl.eye_color,
+      weight: dl.weight,
+      restrictions: dl.restrictions
     });
 
     toast("Driver's license saved.");
@@ -1541,7 +1561,11 @@ $("#dlList") && $("#dlList").addEventListener("click", (e) => {
   }
 
   if (act === "delDl") {
+    const dl = state.driverLicenses.find(x => x.id === id);
     deleteDriverLicense(id);
+
+    apiDelete(`driver-license/${dl.drivers_license_id}`);
+
     toast("License deleted.");
     rerenderAll();
   }
@@ -1563,11 +1587,11 @@ $("#ccForm") && $("#ccForm").addEventListener("submit", async (e) => {
     upsertCreditCard(cc);
 
     await apiPost("creditcard", {
-      credit_card_number: id,
-      holder_name : holderName,
-      security_code: last4,
-      expiration_date: expirationDate,
-      zip_code: zipCode
+      credit_card_number: cc.credit_card_number,
+      holder_name : cc.holder_name,
+      security_code: cc.security_code,
+      expiration_date: cc.expiration_date,
+      zip_code: cc.zip_code
     });
 
     toast("Credit card saved.");
@@ -1584,7 +1608,7 @@ $("#btnCcReset") && $("#btnCcReset").addEventListener("click", () => {
   if ($("#ccId")) $("#ccId").value = "";
 });
 
-$("#ccList") && $("#ccList").addEventListener("click", (e) => {
+$("#ccList") && $("#ccList").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
   const act = btn.dataset.act;
@@ -1603,9 +1627,10 @@ $("#ccList") && $("#ccList").addEventListener("click", (e) => {
   }
 
   if (act === "delCc") {
+    const cc = state.creditCards.find(x => x.id === id);
     deleteCreditCard(id);
     
-    apiDelete(`creditcard/${credit_card_number}`);
+    apiDelete(`creditcard/${cc.credit_card_number}`);
     
     toast("Card deleted.");
     rerenderAll();

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const prisma = require('../prisma/prisma');
+const prisma = require('../../prisma/prisma');
 
 // Get all credit cards
 router.get('/', async (req, res) => {
@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
             include: { Customer: true },
         });
         res.status(201).json(credit_card);
-    } catch (error) {
+    } catch (error) { 
         res.status(400).json({ error: 'Failed to create credit card' });
     }
 });

@@ -22,6 +22,8 @@ model Customer {
   customer_id        Int               @id @default(autoincrement())
   customer_name      String
   credit_score       Int
+  address            String
+  phone              String
   drivers_license_id Int
   credit_card_number Int
   Driver_s_License   Driver_s_License @relation(fields: [drivers_license_id], references: [drivers_license_id], onDelete: NoAction, onUpdate: NoAction)

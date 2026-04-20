@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const prisma = require('../prisma/prisma');
+const prisma = require('../../prisma/prisma');
 
 // Get all customers
 router.get('/', async (req, res) => {
@@ -39,13 +39,15 @@ router.get('/:id', async (req, res) => {
 // Create a new customer
 router.post('/', async (req, res) => {
     try {
-        const { customer_name, credit_score, drivers_license_id, credit_card_number} = req.body;
+        const { customer_name, credit_score, drivers_license_id, credit_card_number, address, phone} = req.body;
         const customer = await prisma.customer.create({
             data: { 
                 customer_name, 
                 credit_score, 
                 drivers_license_id, 
-                credit_card_number
+                credit_card_number,
+                address, 
+                phone
             },
             include: {
                 Driver_s_License: true,
@@ -59,7 +61,9 @@ router.post('/', async (req, res) => {
           // Prisma foreign key constraint error
           return res.status(400).json({ error: 'Invalid drivers_license_id or credit_card_number — referenced record does not exist' });
         }
-        res.status(400).json({ error: 'Failed to create customer' });
+        console.error(error);
+        res.status(400).json({ error: error.message });
+        //res.status(400).json({ error: 'Failed to create customer' });
     }
 });
 
