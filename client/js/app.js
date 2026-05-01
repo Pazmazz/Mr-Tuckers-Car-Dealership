@@ -259,18 +259,14 @@ function deleteVehicle(vin) {
 // A driver's license and credit card must both be linked before saving
 // Customers are matched first by customer_id (edit), then by drivers_license_id (new)
 function upsertCustomer(customer) {
-  if (!customer.drivers_license_id) throw new Error("A driver's license (drivers_license_id) must be linked.");
-  if (!customer.credit_card_number) throw new Error("A credit card (credit_card_number) must be linked.");
-  if (!customer.customer_name || !customer.customer_name.trim()) throw new Error("Customer name is required.");
-
-  const dlId = Number(customer.drivers_license_id);
-  const ccNum = Number(customer.credit_card_number);
-  const dl = state.driverLicenses.find(d => d.drivers_license_id === dlId);
-  const license = dl ? String(dl.drivers_license_id) : String(dlId);
+  const dlId = customer.drivers_license_id ? Number(customer.drivers_license_id) : undefined;
+  const ccNum = customer.credit_card_number ? Number(customer.credit_card_number) : undefined;
+  const dl = dlId ? state.driverLicenses.find(d => d.drivers_license_id === dlId) : null;
+  const license = dl ? String(dl.drivers_license_id) : (dlId ? String(dlId) : "");
 
   const record = {
     ...customer,
-    customer_name: customer.customer_name.trim(),
+    customer_name: customer.customer_name ? customer.customer_name.trim() : "",
     credit_score: Number(customer.credit_score || 0),
     drivers_license_id: dlId,
     credit_card_number: ccNum,
@@ -288,7 +284,7 @@ function upsertCustomer(customer) {
     }
   } else {
     // New customer — check if someone with this license already exists (avoid duplicates)
-    const idx = state.customers.findIndex(c => c.drivers_license_id === dlId);
+    const idx = dlId ? state.customers.findIndex(c => c.drivers_license_id === dlId) : -1;
     if (idx >= 0) {
       state.customers[idx] = { ...state.customers[idx], ...record };
     } else {
