@@ -2,21 +2,22 @@ const express = require("express");
 const router = express.Router();
 const prisma = require('../../prisma/prisma');
 
-// Get all vehicles
+// Get all transactions
 router.get('/', async (req, res) => {
     try {
-        const vehicles = await prisma.vehicle.findMany({
+        const transactions = await prisma.vehicle.findMany({
             include: {
-                Transactions: true,
+                Driver_s_License: true,
+                Credit_card: true
             },
         });
-        res.json(vehicles);
+        res.json(transactions);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch vehicles' });
     }
 });
 
-// Get a single vehicle
+// Get a single transaction
 router.get('/:id', async (req, res) => {
     try {
         const vehicle = await prisma.vehicle.findUnique({
@@ -32,7 +33,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Create a new vehicle
+// Create a new transaction
 router.post('/', async (req, res) => {
     try {
         const { vehicle_type, vehicle_brand, model_year, is_used, mileage, vehicle_price } = req.body;
@@ -55,7 +56,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Update a pre-existing vehicle
+// Update a pre-existing transaction
 router.put('/:id', async (req, res) => {
     try {
         const { vehicle_type, vehicle_brand, model_year, is_used, mileage, vehicle_price } = req.body;
@@ -82,7 +83,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete a vehicle
+// Delete a transaction
 router.delete('/:id', async (req, res) => {
     try {
         await prisma.vehicle.delete({
