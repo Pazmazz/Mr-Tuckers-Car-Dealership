@@ -1,31 +1,33 @@
-/* Mr. Tucker's DMS (front-end prototype)
-   - Vanilla JS, no build step
-   - localStorage persistence + export/backup
-   - Multi-page (each page includes this same script)
-*/
 
+// The key used to store all app data in if necessary localStorage
 const STORAGE_KEY = "mt_dms_v2";
 
+// Default rule for the discount perk feature — purchases over this amount get the perk
 const DEFAULT_DISCOUNT_RULE = {
   thresholdUSD: 50000,
   perkText: "Eligible for the monthly car wash discount (purchase over $50k)."
 };
 
+// Shortcut so we don't have to type document.querySelector every time
 const $ = (sel) => document.querySelector(sel);
 
+// Generates a unique ID string with an optional prefix, uses random hex + timestamp
 function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
 }
 
+// Tries to parse a JSON string, returns null if it fails (instead of crashing)
 function safeJsonParse(str) {
   try { return JSON.parse(str); } catch { return null; }
 }
 
+// Formats a number as a USD currency string (e.g. 25000 -> "$25,000.00")
 function formatUSD(amount) {
   const num = Number(amount || 0);
   return num.toLocaleString(undefined, { style: "currency", currency: "USD" });
 }
 
+// Shows a small notification at the bottom of the screen for 2.4 seconds
 function toast(msg) {
   const el = $("#toast");
   if (!el) return;
@@ -35,6 +37,7 @@ function toast(msg) {
   toast._t = setTimeout(() => (el.hidden = true), 2400);
 }
 
+// Escapes special HTML characters so user-provided strings can't break the page layout
 function escapeHtml(s) {
   return String(s ?? "")
     .replaceAll("&", "&amp;")
@@ -43,11 +46,14 @@ function escapeHtml(s) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+// Same as escapeHtml — used specifically when putting values inside HTML attributes
 function escapeAttr(s) { return escapeHtml(s); }
 
-// API call to the server, allows data submitted on the website to also be saved into the prisma database
+// Base URL for the backend API — all requests go to this server
 const API = "http://localhost:3000/api";
 
+// Sends data to the backend using a POST request (used for creating/updating records)
+// Also saves data to prisma database so it persists on the server side
 async function apiPost(endpoint, data) {
   try {
     const res = await fetch(`${API}/${endpoint}`, {
@@ -66,6 +72,8 @@ async function apiPost(endpoint, data) {
   }
 }
 
+// Sends a DELETE request to the backend to remove a specific record
+// The endpoint should include the ID, like "customers/123"
 async function apiDelete(endpoint) {
   try {
     const res = await fetch(`${API}/${endpoint}`, {
@@ -75,6 +83,7 @@ async function apiDelete(endpoint) {
       const err = await res.json();
       throw new Error(err.error || "Server error");
     }
+    // Some DELETE endpoints return nothing, so we handle an empty response
     const text = await res.text();
     return text ? JSON.parse(text) : null;
   } catch (err) {
@@ -85,23 +94,28 @@ async function apiDelete(endpoint) {
 
 /* ---- State ---- */
 
+// The global state object — everything the app needs is stored here
+// It's loaded from localStorage on startup so data survives page refreshes
 let state = loadState();
 
+// Reads the saved state from localStorage and returns it as an object
+// If nothing is saved yet (or it's corrupted), returns a fresh empty state
 function loadState() {
   const parsed = safeJsonParse(localStorage.getItem(STORAGE_KEY));
   if (!parsed || typeof parsed !== "object") {
     return {
-      session: null,
-      vehicles: [],
-      customers: [],
-      transactions: [],
-      invoices: {},
+      session: null,        // logged-in user info (null = nobody logged in)
+      vehicles: [],         // all vehicles in inventory
+      customers: [],        // all customer records
+      transactions: [],     // all completed transactions
+      invoices: {},         // invoice text keyed by transaction id
       settings: { discountRule: { ...DEFAULT_DISCOUNT_RULE } },
-      employees: [],
-      driverLicenses: [],
-      creditCards: []
+      employees: [],        // registered employees
+      driverLicenses: [],   // standalone driver's license records
+      creditCards: []       // standalone credit card records
     };
   }
+  // Validate each field so bad saved data doesn't crash the app
   return {
     session: parsed.session ?? null,
     vehicles: Array.isArray(parsed.vehicles) ? parsed.vehicles : [],
@@ -115,23 +129,29 @@ function loadState() {
   };
 }
 
+// Saves the current state to localStorage so it persists across page loads
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 /* ---- Auth ---- */
 
+// Separate key from the main state — user accounts are stored independently
 const USERS_KEY = "mt_users";
 
+// Loads the list of registered users from localStorage
 function loadUsers() {
   const parsed = safeJsonParse(localStorage.getItem(USERS_KEY));
   return Array.isArray(parsed) ? parsed : [];
 }
 
+// Saves the updated list of users back to localStorage
 function saveUsers(users) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
+// Creates a new user account — fails if the username is already taken
+// Role ("manager" or "salesperson") is set at registration and stored with the user
 function registerUser(username, password, role, fullName) {
   const users = loadUsers();
   if (users.find(u => u.username === username)) return { ok: false, msg: "Username already taken." };
@@ -140,6 +160,8 @@ function registerUser(username, password, role, fullName) {
   return { ok: true };
 }
 
+// Checks the credentials against stored users, then saves the session if valid
+// Returns true on success, false if username/password don't match
 function login(username, password) {
   const users = loadUsers();
   const user = users.find(u => u.username === username && u.password === password);
@@ -149,22 +171,27 @@ function login(username, password) {
   return true;
 }
 
+// Clears the current session and sends the user back to the login page
 function logout() {
   state.session = null;
   saveState();
   window.location.href = "login.html";
 }
 
+// Redirects to login if no one is signed in — called at the top of every protected page
 function requireAuth() {
   if (!state.session) window.location.href = "login.html";
 }
 
+// Hardcoded "team online" sidebar list — just for demo/display purposes
 const MOCK_EMPLOYEES = [
   { name: "Ted Mosby",      role: "manager",     initials: "TM", online: true  },
   { name: "Rachel Green",   role: "salesperson", initials: "RG", online: true  },
   { name: "Chandler Bing",  role: "salesperson", initials: "CB", online: false },
 ];
 
+// Updates the top-right profile chip and controls what's visible based on who's logged in
+// Managers get access to the Analytics nav link; salespersons don't
 function setSessionBadge() {
   const btn = $("#btnLogout");
   if (btn) btn.hidden = !state.session;
@@ -189,6 +216,7 @@ function setSessionBadge() {
   }
 }
 
+// Renders the team list in the sidebar footer with online/offline status dots
 function renderPeopleOnline() {
   const wrap = $("#peopleOnline");
   const countEl = $("#onlineCount");
@@ -208,6 +236,8 @@ function renderPeopleOnline() {
 
 /* ---- Data operations ---- */
 
+// Adds a new vehicle or updates an existing one — matched by VIN (unique identifier)
+// If a vehicle with the same VIN already exists, it gets overwritten with the new data
 function upsertVehicle(vehicle) {
   const vin = vehicle.vin.trim();
   if (!vin) throw new Error("VIN is required.");
@@ -219,11 +249,15 @@ function upsertVehicle(vehicle) {
   saveState();
 }
 
+// Removes a vehicle from inventory by its VIN
 function deleteVehicle(vin) {
   state.vehicles = state.vehicles.filter(v => v.vin !== vin);
   saveState();
 }
 
+// Adds a new customer or updates an existing one
+// A driver's license and credit card must both be linked before saving
+// Customers are matched first by customer_id (edit), then by drivers_license_id (new)
 function upsertCustomer(customer) {
   if (!customer.drivers_license_id) throw new Error("A driver's license (drivers_license_id) must be linked.");
   if (!customer.credit_card_number) throw new Error("A credit card (credit_card_number) must be linked.");
@@ -245,6 +279,7 @@ function upsertCustomer(customer) {
 
   const existingId = customer.customer_id;
   if (existingId) {
+    // Editing an existing customer — find by their ID
     const idx = state.customers.findIndex(c => c.customer_id === existingId);
     if (idx >= 0) {
       state.customers[idx] = { ...state.customers[idx], ...record };
@@ -252,6 +287,7 @@ function upsertCustomer(customer) {
       state.customers.push({ ...record, txHistory: [] });
     }
   } else {
+    // New customer — check if someone with this license already exists (avoid duplicates)
     const idx = state.customers.findIndex(c => c.drivers_license_id === dlId);
     if (idx >= 0) {
       state.customers[idx] = { ...state.customers[idx], ...record };
@@ -263,6 +299,7 @@ function upsertCustomer(customer) {
   saveState();
 }
 
+// Removes a customer from the list by their customer_id
 function deleteCustomer(customer_id) {
   state.customers = state.customers.filter(c => c.customer_id !== customer_id);
   saveState();
@@ -270,6 +307,8 @@ function deleteCustomer(customer_id) {
 
 /* ---- Employee operations ---- */
 
+// Adds or updates an employee record
+// Also derives initials from the name for display in the team sidebar
 function upsertEmployee(emp) {
   if (!emp.employee_name || !emp.employee_name.trim()) throw new Error("Employee name is required.");
   const id = emp.id || uid("emp");
@@ -279,7 +318,7 @@ function upsertEmployee(emp) {
     employee_id: emp.employee_id ? Number(emp.employee_id) : undefined,
     employee_name: emp.employee_name.trim(),
     department: emp.department || "",
-    manager: emp.manager ? Number(emp.manager) : 0,
+    manager: emp.manager ? Number(emp.manager) : 0,  // 1 = manager, 0 = salesperson
     commission: emp.commission ? Number(emp.commission) : 0,
     name: emp.employee_name.trim(),
     initials: emp.employee_name.trim().split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
@@ -291,6 +330,7 @@ function upsertEmployee(emp) {
   saveState();
 }
 
+// Removes an employee by their internal ID
 function deleteEmployee(id) {
   state.employees = state.employees.filter(e => e.id !== id);
   saveState();
@@ -298,6 +338,8 @@ function deleteEmployee(id) {
 
 /* ---- Driver's license operations ---- */
 
+// Adds or updates a driver's license record
+// Uses the internal `id` for matching when editing; falls back to drivers_license_id for dedup
 function upsertDriverLicense(dl) {
   if (!dl.drivers_license_id) throw new Error("License ID (drivers_license_id) is required.");
   const internalId = dl.id || uid("dl");
@@ -309,6 +351,7 @@ function upsertDriverLicense(dl) {
   const idx = state.driverLicenses.findIndex(d => d.id === internalId);
   if (idx >= 0) state.driverLicenses[idx] = record;
   else {
+    // If this license number already exists, update it instead of adding a duplicate
     const dupIdx = state.driverLicenses.findIndex(d => d.drivers_license_id === record.drivers_license_id);
     if (dupIdx >= 0) state.driverLicenses[dupIdx] = { ...state.driverLicenses[dupIdx], ...record };
     else state.driverLicenses.push(record);
@@ -316,6 +359,7 @@ function upsertDriverLicense(dl) {
   saveState();
 }
 
+// Removes a driver's license by its internal ID
 function deleteDriverLicense(id) {
   state.driverLicenses = state.driverLicenses.filter(d => d.id !== id);
   saveState();
@@ -323,6 +367,7 @@ function deleteDriverLicense(id) {
 
 /* ---- Credit card operations ---- */
 
+// Adds or updates a credit card record — same upsert pattern as driver's licenses
 function upsertCreditCard(cc) {
   if (!cc.credit_card_number) throw new Error("Card number (credit_card_number) is required.");
   const internalId = cc.id || uid("cc");
@@ -336,6 +381,7 @@ function upsertCreditCard(cc) {
   const idx = state.creditCards.findIndex(c => c.id === internalId);
   if (idx >= 0) state.creditCards[idx] = record;
   else {
+    // Prevent duplicate card numbers
     const dupIdx = state.creditCards.findIndex(c => c.credit_card_number === record.credit_card_number);
     if (dupIdx >= 0) state.creditCards[dupIdx] = { ...state.creditCards[dupIdx], ...record };
     else state.creditCards.push(record);
@@ -343,6 +389,7 @@ function upsertCreditCard(cc) {
   saveState();
 }
 
+// Removes a credit card by its internal ID
 function deleteCreditCard(id) {
   state.creditCards = state.creditCards.filter(c => c.id !== id);
   saveState();
@@ -363,7 +410,7 @@ function commissionRateForMonthlySales(totalSalesUSD) {
 function monthlySalesForUser(username, yyyyMM) {
   return state.transactions
     .filter(tx => tx.salesperson === username && tx.date.startsWith(yyyyMM))
-    .reduce((sum, tx) => sum + Number(tx.finalPurchaseUSD || 0), 0);
+    .reduce((sum, tx) => sum + Number(tx.price_paid || 0), 0);
 }
 
 function calculateCommission(username, yyyyMM) {
@@ -373,12 +420,12 @@ function calculateCommission(username, yyyyMM) {
 }
 
 function buildInvoiceText(tx) {
-  const customer = state.customers.find(c => c.customer_id === tx.customerId);
+  const customer = state.customers.find(c => c.customer_id === tx.customer_id);
   const vehicle = state.vehicles.find(v => v.vin === tx.vehicleVinBuy);
   if (!customer) throw new Error("Invoice error: customer missing.");
   if (!vehicle) throw new Error("Invoice error: vehicle missing.");
 
-  const perks = getDiscountPerks(tx.finalPurchaseUSD);
+  const perks = getDiscountPerks(tx.price_paid);
 
   const lines = [
     "MR. TUCKER'S CAR DEALERSHIP",
@@ -392,11 +439,11 @@ function buildInvoiceText(tx) {
     "CUSTOMER",
     `Name: ${customer.customer_name}`,
     `Address: ${customer.address || "—"}`,
-    `Phone: ${customer.phone1 || "—"}${customer.phone2 ? " | " + customer.phone2 : ""}`,
+    `Phone: ${customer.phone || "—"}`,
     `Driver's License ID: ${customer.drivers_license_id}`,
     "",
     "VEHICLE",
-    `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.condition})`,
+    `${vehicle.model_year} ${vehicle.vehicle_brand} (${vehicle.is_used === 0 ? "New" : "Used"})`,
     `VIN: ${vehicle.vin}`,
     `Mileage: ${vehicle.mileage ?? 0}`,
     "",
@@ -404,11 +451,11 @@ function buildInvoiceText(tx) {
   ];
 
   if (tx.type === "tradein") {
-    lines.push(`Vehicle price:       ${formatUSD(tx.vehiclePriceUSD)}`);
-    lines.push(`Trade-in value:     -${formatUSD(tx.tradeInValueUSD)}`);
+    lines.push(`Vehicle price:       ${formatUSD(tx.price_offered)}`);
+    lines.push(`Trade-in value:     -${formatUSD(tx.discount)}`);
     lines.push(`----------------------------------------`);
   }
-  lines.push(`Final purchase:      ${formatUSD(tx.finalPurchaseUSD)}`);
+  lines.push(`Final purchase:      ${formatUSD(tx.price_paid)}`);
 
   if (perks.length) {
     lines.push("");
@@ -428,7 +475,7 @@ function validateCustomerForPurchase(customer) {
 }
 
 function createTransaction(txInput) {
-  const customer = state.customers.find(c => c.customer_id === txInput.customerId);
+  const customer = state.customers.find(c => c.customer_id === txInput.customer_id);
   const vehicle = state.vehicles.find(v => v.vin === txInput.vehicleVinBuy);
 
   if (!customer) throw new Error("Customer not found.");
@@ -438,21 +485,21 @@ function createTransaction(txInput) {
 
   if (Number(vehicle.stock) <= 0) throw new Error("Vehicle is out of stock.");
 
-  const vehiclePriceUSD = txInput.priceOverrideUSD ?? Number(vehicle.price);
-  const tradeInValueUSD = txInput.type === "tradein" ? Number(txInput.tradeInValueUSD || 0) : 0;
-  const finalPurchaseUSD = Math.max(0, vehiclePriceUSD - tradeInValueUSD);
+  const price_offered = txInput.priceOverrideUSD ?? Number(vehicle.vehicle_price);
+  const discount = txInput.type === "tradein" ? Number(txInput.discount || 0) : 0;
+  const price_paid = Math.max(0, price_offered - discount);
 
   const tx = {
     id: uid("tx"),
     type: txInput.type,
     date: txInput.date,
-    customerId: txInput.customerId,
+    customer_id: txInput.customer_id,
     salesperson: txInput.salesperson,
     vehicleVinBuy: vehicle.vin,
-    vehiclePriceUSD,
+    price_offered,
     tradeIn: txInput.type === "tradein" ? txInput.tradeIn : null,
-    tradeInValueUSD,
-    finalPurchaseUSD,
+    discount,
+    price_paid,
     invoiceNo: `INV-${Date.now().toString(36).toUpperCase()}`
   };
 
@@ -464,19 +511,18 @@ function createTransaction(txInput) {
     state.vehicles.unshift({
       id: uid("veh"),
       vin: `TRADE-${Date.now().toString(36).toUpperCase()}`,
-      make: txInput.tradeIn.make || "Unknown",
-      model: txInput.tradeIn.model || "Unknown",
-      year: Number(txInput.tradeIn.year || new Date().getFullYear()),
-      category: "family",
-      condition: "trade-in",
+      vehicle_brand: txInput.tradeIn.vehicle_brand || "Unknown",
+      model_year: Number(txInput.tradeIn.model_year || new Date().getFullYear()),
+      vehicle_type: "family",
+      is_used: 1,
       mileage: Number(txInput.tradeIn.mileage || 0),
-      price: Number(txInput.tradeIn.estimatedResaleUSD || 0),
+      vehicle_price: Number(txInput.tradeIn.estimatedResaleUSD || 0),
       stock: 1
     });
   }
 
   customer.txHistory = customer.txHistory || [];
-  customer.txHistory.unshift({ txId: tx.id, date: tx.date, type: tx.type, amountUSD: tx.finalPurchaseUSD });
+  customer.txHistory.unshift({ txId: tx.id, date: tx.date, type: tx.type, amountUSD: tx.price_paid });
 
   state.invoices[tx.id] = buildInvoiceText(tx);
   saveState();
@@ -488,17 +534,17 @@ function globalSearch(query) {
   if (!q) return { vehicles: [], customers: [], transactions: [] };
 
   const vehicles = state.vehicles.filter(v =>
-    [v.vin, v.make, v.model, v.category, v.condition, String(v.year)]
+    [v.vin, v.vehicle_brand, v.vehicle_type, String(v.model_year)]
       .some(x => String(x || "").toLowerCase().includes(q))
   );
 
   const customers = state.customers.filter(c =>
-    [c.customer_name, String(c.drivers_license_id || ""), c.phone1, c.phone2, c.address]
+    [c.customer_name, String(c.drivers_license_id || ""), c.phone, c.address]
       .some(x => String(x || "").toLowerCase().includes(q))
   );
 
   const transactions = state.transactions.filter(t =>
-    [t.id, t.invoiceNo, t.salesperson, t.date, t.type, t.vehicleVinBuy]
+    [t.id, t.invoiceNo, t.salesperson, t.date, t.type, t.vehicleVinBuy, String(t.customer_id || "")]
       .some(x => String(x || "").toLowerCase().includes(q))
   );
 
@@ -526,7 +572,7 @@ function renderInventory() {
 
   const q = ($("#inventoryFilter")?.value || "").trim().toLowerCase();
   const vehicles = state.vehicles.filter(v =>
-    !q || [v.vin, v.make, v.model].some(x => String(x || "").toLowerCase().includes(q))
+    !q || [v.vin, v.vehicle_brand].some(x => String(x || "").toLowerCase().includes(q))
   );
 
   if (!vehicles.length) {
@@ -538,19 +584,20 @@ function renderInventory() {
     <table aria-label="Inventory">
       <thead>
         <tr>
-          <th>VIN</th><th>Vehicle</th><th>Type</th><th>Category</th>
-          <th>Mileage</th><th>Price</th><th>Stock</th><th>Actions</th>
+          <th>VIN</th><th>vehicle_brand</th><th>model_year</th><th>vehicle_type</th>
+          <th>is_used</th><th>mileage</th><th>vehicle_price</th><th>Stock</th><th>Actions</th>
         </tr>
       </thead>
       <tbody>
         ${vehicles.map(v => `
           <tr>
             <td class="mono">${escapeHtml(v.vin)}</td>
-            <td>${escapeHtml(v.year)} ${escapeHtml(v.make)} ${escapeHtml(v.model)}</td>
-            <td>${escapeHtml(v.condition)}</td>
-            <td>${escapeHtml(v.category)}</td>
+            <td>${escapeHtml(v.vehicle_brand)}</td>
+            <td>${escapeHtml(v.model_year)}</td>
+            <td>${escapeHtml(v.vehicle_type)}</td>
+            <td>${v.is_used === 0 ? "New" : "Used"}</td>
             <td>${escapeHtml(v.mileage ?? 0)}</td>
-            <td>${formatUSD(v.price)}</td>
+            <td>${formatUSD(v.vehicle_price)}</td>
             <td>${escapeHtml(v.stock)}</td>
             <td>
               <button class="btn" data-act="editVehicle" data-vin="${escapeAttr(v.vin)}" type="button">Edit</button>
@@ -573,8 +620,7 @@ function renderCustomers() {
     return (
       String(c.customer_name || "").toLowerCase().includes(q) ||
       String(c.drivers_license_id || "").includes(q) ||
-      String(c.phone1 || "").toLowerCase().includes(q) ||
-      String(c.phone2 || "").toLowerCase().includes(q)
+      String(c.phone || "").toLowerCase().includes(q)
     );
   });
 
@@ -587,7 +633,7 @@ function renderCustomers() {
     <table aria-label="Customers">
       <thead>
         <tr>
-          <th>customer_name</th><th>drivers_license_id</th><th>credit_card_number</th><th>credit_score</th><th>Phones</th>
+          <th>customer_name</th><th>drivers_license_id</th><th>credit_card_number</th><th>credit_score</th><th>phone</th>
           <th>Address</th><th>Tx history</th><th>Actions</th>
         </tr>
       </thead>
@@ -607,7 +653,7 @@ function renderCustomers() {
             <td class="mono small">${dlDisplay}</td>
             <td class="mono small">${ccDisplay}</td>
             <td>${escapeHtml(c.credit_score)}</td>
-            <td>${escapeHtml(c.phone1 || "—")}${c.phone2 ? "<br/>" + escapeHtml(c.phone2) : ""}</td>
+            <td>${escapeHtml(c.phone || "—")}</td>
             <td>${escapeHtml(c.address || "—")}</td>
             <td class="mono small">${escapeHtml((c.txHistory || []).slice(0,3).map(t => `${t.date}:${t.type}:${Math.round(t.amountUSD)}`).join(" | ") || "—")}</td>
             <td>
@@ -632,7 +678,7 @@ function refreshTransactionSelects() {
 
   const available = state.vehicles.filter(v => Number(v.stock) > 0);
   vehSel.innerHTML = available.length
-    ? available.map(v => `<option value="${escapeAttr(v.vin)}">${escapeHtml(v.year)} ${escapeHtml(v.make)} ${escapeHtml(v.model)} — ${escapeHtml(v.vin)} (stock ${escapeHtml(v.stock)})</option>`).join("")
+    ? available.map(v => `<option value="${escapeAttr(v.vin)}">${escapeHtml(v.model_year)} ${escapeHtml(v.vehicle_brand)} — ${escapeHtml(v.vin)} (stock ${escapeHtml(v.stock)})</option>`).join("")
     : `<option value="">(No vehicles in stock — add inventory)</option>`;
 }
 
@@ -658,7 +704,7 @@ function renderTransactions() {
       </thead>
       <tbody>
         ${state.transactions.map(tx => {
-          const customer = state.customers.find(c => c.customer_id === tx.customerId);
+          const customer = state.customers.find(c => c.customer_id === tx.customer_id);
           const name = customer ? customer.customer_name : "Unknown";
           return `
             <tr>
@@ -666,7 +712,7 @@ function renderTransactions() {
               <td>${escapeHtml(tx.type)}</td>
               <td>${escapeHtml(name)}</td>
               <td class="mono">${escapeHtml(tx.vehicleVinBuy)}</td>
-              <td>${formatUSD(tx.finalPurchaseUSD)}</td>
+              <td>${formatUSD(tx.price_paid)}</td>
               <td class="mono">${escapeHtml(tx.invoiceNo)}</td>
               <td class="mono">${escapeHtml(tx.salesperson)}</td>
               <td>
@@ -694,8 +740,8 @@ function renderReports() {
   const totals = {};
   let grand = 0;
   for (const tx of state.transactions) {
-    grand += Number(tx.finalPurchaseUSD || 0);
-    totals[tx.salesperson] = (totals[tx.salesperson] || 0) + Number(tx.finalPurchaseUSD || 0);
+    grand += Number(tx.price_paid || 0);
+    totals[tx.salesperson] = (totals[tx.salesperson] || 0) + Number(tx.price_paid || 0);
   }
 
   const lines = [];
@@ -717,11 +763,11 @@ function renderReports() {
       <tbody>
         ${low.map(v => `
           <tr>
-            <td>${escapeHtml(v.year)} ${escapeHtml(v.make)} ${escapeHtml(v.model)}</td>
+            <td>${escapeHtml(v.model_year)} ${escapeHtml(v.vehicle_brand)}</td>
             <td class="mono">${escapeHtml(v.vin)}</td>
             <td>${escapeHtml(v.stock)}</td>
-            <td>${escapeHtml(v.condition)}</td>
-            <td>${formatUSD(v.price)}</td>
+            <td>${v.is_used === 0 ? "New" : "Used"}</td>
+            <td>${formatUSD(v.vehicle_price)}</td>
           </tr>
         `).join("")}
       </tbody>
@@ -745,21 +791,21 @@ function renderSearch() {
     <div class="card">
       <h2>Vehicles</h2>
       ${res.vehicles.length ? res.vehicles.map(v => `
-        <div class="muted small mono">${escapeHtml(v.vin)} — ${escapeHtml(v.year)} ${escapeHtml(v.make)} ${escapeHtml(v.model)} (${escapeHtml(v.condition)}), stock ${escapeHtml(v.stock)}</div>
+        <div class="muted small mono">${escapeHtml(v.vin)} — ${escapeHtml(v.model_year)} ${escapeHtml(v.vehicle_brand)} (${v.is_used === 0 ? "New" : "Used"}), stock ${escapeHtml(v.stock)}</div>
       `).join("") : `<div class="muted small">No matches.</div>`}
     </div>
 
     <div class="card">
       <h2>Customers</h2>
       ${res.customers.length ? res.customers.map(c => `
-        <div class="muted small mono">DL#${escapeHtml(c.drivers_license_id)} — ${escapeHtml(c.customer_name)} (${escapeHtml(c.phone1 || "—")})</div>
+        <div class="muted small mono">DL#${escapeHtml(c.drivers_license_id)} — ${escapeHtml(c.customer_name)} (${escapeHtml(c.phone || "—")})</div>
       `).join("") : `<div class="muted small">No matches.</div>`}
     </div>
 
     <div class="card">
       <h2>Transactions</h2>
       ${res.transactions.length ? res.transactions.map(t => `
-        <div class="muted small mono">${escapeHtml(t.invoiceNo)} — ${escapeHtml(t.date)} ${escapeHtml(t.type)} ${formatUSD(t.finalPurchaseUSD)} (${escapeHtml(t.salesperson)})</div>
+        <div class="muted small mono">${escapeHtml(t.invoiceNo)} — ${escapeHtml(t.date)} ${escapeHtml(t.type)} ${formatUSD(t.price_paid)} (${escapeHtml(t.salesperson)})</div>
       `).join("") : `<div class="muted small">No matches.</div>`}
     </div>
   `;
@@ -1006,13 +1052,12 @@ $("#vehicleForm") && $("#vehicleForm").addEventListener("submit", (e) => {
     const v = {
       id: $("#vehicleId").value || undefined,
       vin: $("#vehicleVin").value,
-      make: $("#vehicleMake").value,
-      model: $("#vehicleModel").value,
-      year: Number($("#vehicleYear").value),
-      category: $("#vehicleCategory").value,
-      condition: $("#vehicleCondition").value,
+      vehicle_brand: $("#vehicle_brand").value,
+      model_year: Number($("#model_year").value),
+      vehicle_type: $("#vehicle_type").value,
+      is_used: Number($("#is_used").value),
       mileage: Number($("#vehicleMileage").value || 0),
-      price: Number($("#vehiclePrice").value),
+      vehicle_price: Number($("#vehicle_price").value),
       stock: Number($("#vehicleStock").value)
     };
     upsertVehicle(v);
@@ -1044,13 +1089,12 @@ $("#inventoryList") && $("#inventoryList").addEventListener("click", (e) => {
     if (!v) return;
     $("#vehicleId").value = v.id || "";
     $("#vehicleVin").value = v.vin;
-    $("#vehicleMake").value = v.make;
-    $("#vehicleModel").value = v.model;
-    $("#vehicleYear").value = v.year;
-    $("#vehicleCategory").value = v.category;
-    $("#vehicleCondition").value = v.condition;
+    if ($("#vehicle_brand"))  $("#vehicle_brand").value = v.vehicle_brand || "";
+    if ($("#model_year"))     $("#model_year").value = v.model_year || "";
+    if ($("#vehicle_type"))   $("#vehicle_type").value = v.vehicle_type || "";
+    if ($("#is_used"))        $("#is_used").value = v.is_used ?? 0;
     $("#vehicleMileage").value = v.mileage ?? 0;
-    $("#vehiclePrice").value = v.price;
+    if ($("#vehicle_price"))  $("#vehicle_price").value = v.vehicle_price || "";
     $("#vehicleStock").value = v.stock;
     toast("Editing vehicle.");
   }
@@ -1076,8 +1120,7 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
       drivers_license_id: Number($("#cust_drivers_license_id").value) || undefined,
       credit_card_number: Number($("#cust_credit_card_number").value) || undefined,
       address: $("#custAddress").value.trim(),
-      phone1: $("#custPhone1").value.trim(),
-      phone2: $("#custPhone2").value.trim()
+      phone: $("#cust_phone").value.trim()
     };
     upsertCustomer(c);
 
@@ -1086,7 +1129,7 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
       customer_name: c.customer_name,
       credit_score: c.credit_score,
       address: c.address,
-      phone: c.phone1,
+      phone: c.phone,
       drivers_license_id: c.drivers_license_id,
       credit_card_number: c.credit_card_number        
     });
@@ -1127,8 +1170,7 @@ $("#customerList") && $("#customerList").addEventListener("click", async (e) => 
     if ($("#cust_customer_name")) $("#cust_customer_name").value = c.customer_name || "";
     if ($("#cust_credit_score")) $("#cust_credit_score").value = c.credit_score || "";
     if ($("#custAddress")) $("#custAddress").value = c.address || "";
-    if ($("#custPhone1")) $("#custPhone1").value = c.phone1 || "";
-    if ($("#custPhone2")) $("#custPhone2").value = c.phone2 || "";
+    if ($("#cust_phone")) $("#cust_phone").value = c.phone || "";
     if ($("#cust_drivers_license_id") && c.drivers_license_id) $("#cust_drivers_license_id").value = c.drivers_license_id;
     if ($("#cust_credit_card_number") && c.credit_card_number) $("#cust_credit_card_number").value = c.credit_card_number;
     toast("Editing customer.");
@@ -1168,15 +1210,14 @@ $("#txForm") && $("#txForm").addEventListener("submit", (e) => {
     const txInput = {
       type,
       date: $("#txDate").value,
-      customerId: $("#txCustomer").value,
+      customer_id: $("#txCustomer").value,
       salesperson: $("#txSalesperson").value.trim(),
       vehicleVinBuy: $("#txVehicleBuy").value,
       priceOverrideUSD: $("#txPriceOverride").value ? Number($("#txPriceOverride").value) : null,
-      tradeInValueUSD: type === "tradein" ? Number($("#txTradeValue").value || 0) : 0,
+      discount: type === "tradein" ? Number($("#txTradeValue").value || 0) : 0,
       tradeIn: type === "tradein" ? {
-        make: $("#txTradeMake").value.trim(),
-        model: $("#txTradeModel").value.trim(),
-        year: Number($("#txTradeYear").value || 0),
+        vehicle_brand: $("#txTradeMake").value.trim(),
+        model_year: Number($("#txTradeYear").value || 0),
         mileage: Number($("#txTradeMileage").value || 0),
         conditionNote: $("#txTradeCondition").value.trim(),
         estimatedResaleUSD: Number($("#txTradeValue").value || 0)
@@ -1408,8 +1449,8 @@ function renderDcQuotes() {
   const csvBtn = $("#btnExportCSV");
   if (csvBtn) {
     csvBtn.addEventListener("click", () => {
-      const headers = ["customer_name","drivers_license_id","credit_card_number","credit_score","Phone1","Phone2","Address"];
-      const rows = state.customers.map(c => [c.customer_name||"", c.drivers_license_id||"", c.credit_card_number||"", c.credit_score||"", c.phone1||"", c.phone2||"", c.address||""].map(v => `"${String(v).replace(/"/g,'""')}"`).join(","));
+      const headers = ["customer_name","drivers_license_id","credit_card_number","credit_score","phone","address"];
+      const rows = state.customers.map(c => [c.customer_name||"", c.drivers_license_id||"", c.credit_card_number||"", c.credit_score||"", c.phone||"", c.address||""].map(v => `"${String(v).replace(/"/g,'""')}"`).join(","));
       const csv = [headers.join(","), ...rows].join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
@@ -1426,10 +1467,15 @@ function renderDcQuotes() {
       const current = $("#cpCurrent").value;
       const next    = $("#cpNew").value;
       const confirm = $("#cpConfirm").value;
-      if (current !== "demo") { toast("Current password is incorrect."); return; }
-      if (next !== confirm)   { toast("New passwords don't match."); return; }
-      if (next !== "demo")    { toast("Demo system: password must remain 'demo'."); return; }
-      toast("Password updated (demo — unchanged).");
+      if (!state.session) { toast("Not logged in."); return; }
+      const users = loadUsers();
+      const user = users.find(u => u.username === state.session.username && u.password === current);
+      if (!user) { toast("Current password is incorrect."); return; }
+      if (next !== confirm) { toast("New passwords don't match."); return; }
+      if (!next) { toast("New password cannot be empty."); return; }
+      user.password = next;
+      saveUsers(users);
+      toast("Password updated.");
       cpForm.reset();
     });
   }
@@ -1735,21 +1781,21 @@ function loadDemoData() {
   // ── Vehicles ──
   // Stock = desired final count + number of demo purchases against this VIN
   state.vehicles = [
-    { id: uid("veh"), vin: "JH4KA7650MC000001", make: "Porsche",    model: "911 Carrera",        year: 2023, category: "sport",        condition: "new",      mileage: 0,      price: 112000, stock: 2  }, // tx1 → final 1
-    { id: uid("veh"), vin: "1HGCM82633A000002", make: "Honda",      model: "Accord EX",          year: 2022, category: "family",       condition: "used",     mileage: 28400,  price: 24500,  stock: 5  }, // tx2+tx11 → final 3
-    { id: uid("veh"), vin: "2T1BURHE0JC000003", make: "Toyota",     model: "GR Supra",           year: 2024, category: "sport",        condition: "new",      mileage: 0,      price: 57000,  stock: 5  }, // tx10+tx14+tx18 → final 2
-    { id: uid("veh"), vin: "WBS8M9C50J5J00004", make: "BMW",        model: "M3 Competition",     year: 2021, category: "sport",        condition: "used",     mileage: 14200,  price: 58900,  stock: 2  }, // tx3 → final 1
-    { id: uid("veh"), vin: "1G1FB1RX5J0000005", make: "Chevrolet",  model: "Corvette Z06",       year: 2024, category: "sport",        condition: "new",      mileage: 0,      price: 89500,  stock: 1  }, // no sales
-    { id: uid("veh"), vin: "5YJSA1E26MF000006", make: "Tesla",      model: "Model S Plaid",      year: 2022, category: "family",       condition: "used",     mileage: 19800,  price: 71000,  stock: 3  }, // tx5 → final 2
-    { id: uid("veh"), vin: "3VWF17AT1DM000007", make: "Volkswagen", model: "Golf GTI",           year: 2020, category: "sport",        condition: "trade-in", mileage: 44100,  price: 18200,  stock: 3  }, // tx12+tx20 → final 1
-    { id: uid("veh"), vin: "2HKRM4H73FH000008", make: "Honda",      model: "CR-V Sport",         year: 2023, category: "family",       condition: "new",      mileage: 0,      price: 36400,  stock: 7  }, // tx6+tx9+tx13 → final 4
-    { id: uid("veh"), vin: "1FM5K8GC1LGB00009", make: "Ford",       model: "Explorer XLT",       year: 2023, category: "family",       condition: "used",     mileage: 22000,  price: 38700,  stock: 4  }, // tx8+tx16 → final 2
-    { id: uid("veh"), vin: "WDDUG8CB4EA000010", make: "Mercedes",   model: "S-Class",            year: 2022, category: "family",       condition: "used",     mileage: 18500,  price: 94000,  stock: 2  }, // tx4 → final 1
-    { id: uid("veh"), vin: "JN1AZ4EH4FM000011", make: "Nissan",     model: "GT-R Premium",       year: 2021, category: "sport",        condition: "used",     mileage: 9800,   price: 98500,  stock: 2  }, // tx7 → final 1
-    { id: uid("veh"), vin: "1FADP3F27EL000012", make: "Ford",       model: "Focus ST",           year: 2023, category: "sport",        condition: "new",      mileage: 0,      price: 31200,  stock: 3  }, // no sales
-    { id: uid("veh"), vin: "2C3CCAGG4FH000013", make: "Dodge",      model: "Challenger RT",      year: 2022, category: "sport",        condition: "used",     mileage: 31000,  price: 32400,  stock: 2  }, // tx19 → final 1
-    { id: uid("veh"), vin: "KNDJN2A24G7000014", make: "Kia",        model: "Soul LX",            year: 2023, category: "recreational", condition: "new",      mileage: 0,      price: 22100,  stock: 7  }, // tx15+tx17 → final 5
-    { id: uid("veh"), vin: "3CZRU6H52KM000015", make: "Honda",      model: "HR-V Sport",         year: 2022, category: "recreational", condition: "used",     mileage: 16400,  price: 24800,  stock: 2  }, // no sales
+    { id: uid("veh"), vin: "JH4KA7650MC000001", vehicle_brand: "Porsche",    model_year: 2023, vehicle_type: "sport",        is_used: 0, mileage: 0,      vehicle_price: 112000, stock: 2  },
+    { id: uid("veh"), vin: "1HGCM82633A000002", vehicle_brand: "Honda",      model_year: 2022, vehicle_type: "family",       is_used: 1, mileage: 28400,  vehicle_price: 24500,  stock: 5  },
+    { id: uid("veh"), vin: "2T1BURHE0JC000003", vehicle_brand: "Toyota",     model_year: 2024, vehicle_type: "sport",        is_used: 0, mileage: 0,      vehicle_price: 57000,  stock: 5  },
+    { id: uid("veh"), vin: "WBS8M9C50J5J00004", vehicle_brand: "BMW",        model_year: 2021, vehicle_type: "sport",        is_used: 1, mileage: 14200,  vehicle_price: 58900,  stock: 2  },
+    { id: uid("veh"), vin: "1G1FB1RX5J0000005", vehicle_brand: "Chevrolet",  model_year: 2024, vehicle_type: "sport",        is_used: 0, mileage: 0,      vehicle_price: 89500,  stock: 1  },
+    { id: uid("veh"), vin: "5YJSA1E26MF000006", vehicle_brand: "Tesla",      model_year: 2022, vehicle_type: "family",       is_used: 1, mileage: 19800,  vehicle_price: 71000,  stock: 3  },
+    { id: uid("veh"), vin: "3VWF17AT1DM000007", vehicle_brand: "Volkswagen", model_year: 2020, vehicle_type: "sport",        is_used: 1, mileage: 44100,  vehicle_price: 18200,  stock: 3  },
+    { id: uid("veh"), vin: "2HKRM4H73FH000008", vehicle_brand: "Honda",      model_year: 2023, vehicle_type: "family",       is_used: 0, mileage: 0,      vehicle_price: 36400,  stock: 7  },
+    { id: uid("veh"), vin: "1FM5K8GC1LGB00009", vehicle_brand: "Ford",       model_year: 2023, vehicle_type: "family",       is_used: 1, mileage: 22000,  vehicle_price: 38700,  stock: 4  },
+    { id: uid("veh"), vin: "WDDUG8CB4EA000010", vehicle_brand: "Mercedes",   model_year: 2022, vehicle_type: "family",       is_used: 1, mileage: 18500,  vehicle_price: 94000,  stock: 2  },
+    { id: uid("veh"), vin: "JN1AZ4EH4FM000011", vehicle_brand: "Nissan",     model_year: 2021, vehicle_type: "sport",        is_used: 1, mileage: 9800,   vehicle_price: 98500,  stock: 2  },
+    { id: uid("veh"), vin: "1FADP3F27EL000012", vehicle_brand: "Ford",       model_year: 2023, vehicle_type: "sport",        is_used: 0, mileage: 0,      vehicle_price: 31200,  stock: 3  },
+    { id: uid("veh"), vin: "2C3CCAGG4FH000013", vehicle_brand: "Dodge",      model_year: 2022, vehicle_type: "sport",        is_used: 1, mileage: 31000,  vehicle_price: 32400,  stock: 2  },
+    { id: uid("veh"), vin: "KNDJN2A24G7000014", vehicle_brand: "Kia",        model_year: 2023, vehicle_type: "recreational", is_used: 0, mileage: 0,      vehicle_price: 22100,  stock: 7  },
+    { id: uid("veh"), vin: "3CZRU6H52KM000015", vehicle_brand: "Honda",      model_year: 2022, vehicle_type: "recreational", is_used: 1, mileage: 16400,  vehicle_price: 24800,  stock: 2  },
   ];
 
   // ── Driver's Licenses and Credit Cards (schema field names; drivers_license_id and credit_card_number are Ints) ──
@@ -1820,8 +1866,7 @@ function loadDemoData() {
     customer_id: uid("cust"),
     customer_name: s.name,
     address: s.addr,
-    phone1: s.phone1,
-    phone2: "",
+    phone: s.phone1,
     credit_score: s.score,
     drivers_license_id: s.dlId,
     credit_card_number: s.ccNum,
@@ -1836,35 +1881,35 @@ function loadDemoData() {
   // ── Transactions ── spread Sept 2025 → Mar 2026 for chart data
   const demoTxs = [
     // Sep 2025
-    { type: "purchase", date: "2025-09-04", customerId: cId(1007), salesperson: "ted_mosby",    vehicleVinBuy: "JH4KA7650MC000001", priceOverrideUSD: 112000, tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-09-18", customerId: cId(1001), salesperson: "rachel_green", vehicleVinBuy: "1HGCM82633A000002", priceOverrideUSD: 23800,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-09-04", customer_id: cId(1007), salesperson: "ted_mosby",    vehicleVinBuy: "JH4KA7650MC000001", priceOverrideUSD: 112000, discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-09-18", customer_id: cId(1001), salesperson: "rachel_green", vehicleVinBuy: "1HGCM82633A000002", priceOverrideUSD: 23800,  discount: 0,     tradeIn: null },
     // Oct 2025
-    { type: "purchase", date: "2025-10-02", customerId: cId(1030), salesperson: "chandler_bing",vehicleVinBuy: "WBS8M9C50J5J00004", priceOverrideUSD: 58900,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-10-15", customerId: cId(1022), salesperson: "ted_mosby",    vehicleVinBuy: "WDDUG8CB4EA000010", priceOverrideUSD: 94000,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-10-28", customerId: cId(1028), salesperson: "rachel_green", vehicleVinBuy: "5YJSA1E26MF000006", priceOverrideUSD: 71000,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-10-02", customer_id: cId(1030), salesperson: "chandler_bing",vehicleVinBuy: "WBS8M9C50J5J00004", priceOverrideUSD: 58900,  discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-10-15", customer_id: cId(1022), salesperson: "ted_mosby",    vehicleVinBuy: "WDDUG8CB4EA000010", priceOverrideUSD: 94000,  discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-10-28", customer_id: cId(1028), salesperson: "rachel_green", vehicleVinBuy: "5YJSA1E26MF000006", priceOverrideUSD: 71000,  discount: 0,     tradeIn: null },
     // Nov 2025
-    { type: "purchase", date: "2025-11-05", customerId: cId(1011), salesperson: "chandler_bing",vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 35900,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-11-14", customerId: cId(1025), salesperson: "ted_mosby",    vehicleVinBuy: "JN1AZ4EH4FM000011", priceOverrideUSD: 98500,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2025-11-22", customerId: cId(1017), salesperson: "rachel_green", vehicleVinBuy: "1FM5K8GC1LGB00009", priceOverrideUSD: 37200,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-11-05", customer_id: cId(1011), salesperson: "chandler_bing",vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 35900,  discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-11-14", customer_id: cId(1025), salesperson: "ted_mosby",    vehicleVinBuy: "JN1AZ4EH4FM000011", priceOverrideUSD: 98500,  discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-11-22", customer_id: cId(1017), salesperson: "rachel_green", vehicleVinBuy: "1FM5K8GC1LGB00009", priceOverrideUSD: 37200,  discount: 0,     tradeIn: null },
     // Dec 2025
-    { type: "purchase", date: "2025-12-03", customerId: cId(1008), salesperson: "chandler_bing",vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 36000,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "tradein",  date: "2025-12-11", customerId: cId(1024), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 57000,  tradeInValueUSD: 12000,
-      tradeIn: { make: "Jeep", model: "Wrangler", year: 2016, mileage: 88000, estimatedResaleUSD: 12000 } },
-    { type: "purchase", date: "2025-12-19", customerId: cId(1014), salesperson: "rachel_green", vehicleVinBuy: "1HGCM82633A000002", priceOverrideUSD: 24200,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2025-12-03", customer_id: cId(1008), salesperson: "chandler_bing",vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 36000,  discount: 0,     tradeIn: null },
+    { type: "tradein",  date: "2025-12-11", customer_id: cId(1024), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 57000,  discount: 12000,
+      tradeIn: { vehicle_brand: "Jeep", model_year: 2016, mileage: 88000, estimatedResaleUSD: 12000 } },
+    { type: "purchase", date: "2025-12-19", customer_id: cId(1014), salesperson: "rachel_green", vehicleVinBuy: "1HGCM82633A000002", priceOverrideUSD: 24200,  discount: 0,     tradeIn: null },
     // Jan 2026
-    { type: "purchase", date: "2026-01-07", customerId: cId(1020), salesperson: "chandler_bing",vehicleVinBuy: "3VWF17AT1DM000007", priceOverrideUSD: 17500,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2026-01-15", customerId: cId(1002), salesperson: "rachel_green", vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 35900,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2026-01-24", customerId: cId(1016), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 55500,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-01-07", customer_id: cId(1020), salesperson: "chandler_bing",vehicleVinBuy: "3VWF17AT1DM000007", priceOverrideUSD: 17500,  discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-01-15", customer_id: cId(1002), salesperson: "rachel_green", vehicleVinBuy: "2HKRM4H73FH000008", priceOverrideUSD: 35900,  discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-01-24", customer_id: cId(1016), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 55500,  discount: 0,     tradeIn: null },
     // Feb 2026
-    { type: "tradein",  date: "2026-02-03", customerId: cId(1029), salesperson: "chandler_bing",vehicleVinBuy: "KNDJN2A24G7000014", priceOverrideUSD: 22100,  tradeInValueUSD: 5500,
-      tradeIn: { make: "Toyota", model: "Corolla", year: 2014, mileage: 74000, estimatedResaleUSD: 5500 } },
-    { type: "purchase", date: "2026-02-12", customerId: cId(1009), salesperson: "rachel_green", vehicleVinBuy: "1FM5K8GC1LGB00009", priceOverrideUSD: 38200,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2026-02-20", customerId: cId(1015), salesperson: "chandler_bing",vehicleVinBuy: "KNDJN2A24G7000014", priceOverrideUSD: 21500,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "tradein",  date: "2026-02-03", customer_id: cId(1029), salesperson: "chandler_bing",vehicleVinBuy: "KNDJN2A24G7000014", priceOverrideUSD: 22100,  discount: 5500,
+      tradeIn: { vehicle_brand: "Toyota", model_year: 2014, mileage: 74000, estimatedResaleUSD: 5500 } },
+    { type: "purchase", date: "2026-02-12", customer_id: cId(1009), salesperson: "rachel_green", vehicleVinBuy: "1FM5K8GC1LGB00009", priceOverrideUSD: 38200,  discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-02-20", customer_id: cId(1015), salesperson: "chandler_bing",vehicleVinBuy: "KNDJN2A24G7000014", priceOverrideUSD: 21500,  discount: 0,     tradeIn: null },
     // Mar 2026
-    { type: "tradein",  date: "2026-03-10", customerId: cId(1019), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 57000,  tradeInValueUSD: 9500,
-      tradeIn: { make: "Dodge", model: "Charger", year: 2018, mileage: 62000, estimatedResaleUSD: 9500 } },
-    { type: "purchase", date: "2026-03-14", customerId: cId(1002), salesperson: "rachel_green", vehicleVinBuy: "2C3CCAGG4FH000013", priceOverrideUSD: 31900,  tradeInValueUSD: 0,     tradeIn: null },
-    { type: "purchase", date: "2026-03-15", customerId: cId(1012), salesperson: "ted_mosby",    vehicleVinBuy: "3VWF17AT1DM000007", priceOverrideUSD: 17500,  tradeInValueUSD: 0,     tradeIn: null },
+    { type: "tradein",  date: "2026-03-10", customer_id: cId(1019), salesperson: "ted_mosby",    vehicleVinBuy: "2T1BURHE0JC000003", priceOverrideUSD: 57000,  discount: 9500,
+      tradeIn: { vehicle_brand: "Dodge", model_year: 2018, mileage: 62000, estimatedResaleUSD: 9500 } },
+    { type: "purchase", date: "2026-03-14", customer_id: cId(1002), salesperson: "rachel_green", vehicleVinBuy: "2C3CCAGG4FH000013", priceOverrideUSD: 31900,  discount: 0,     tradeIn: null },
+    { type: "purchase", date: "2026-03-15", customer_id: cId(1012), salesperson: "ted_mosby",    vehicleVinBuy: "3VWF17AT1DM000007", priceOverrideUSD: 17500,  discount: 0,     tradeIn: null },
   ];
 
   for (const txInput of demoTxs) {

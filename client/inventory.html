@@ -75,32 +75,30 @@
                 <label>Stock quantity<input id="vehicleStock" type="number" min="0" required placeholder="1" /></label>
               </div>
               <div class="form-section-label">Vehicle</div>
-              <div class="grid three tight">
-                <label>Make<input id="vehicleMake" required placeholder="Honda" /></label>
-                <label>Model<input id="vehicleModel" required placeholder="Accord EX" /></label>
-                <label>Year<input id="vehicleYear" type="number" min="1900" max="2099" required placeholder="2024" /></label>
+              <div class="grid two tight">
+                <label>Brand <span class="muted small">(vehicle_brand)</span><input id="vehicle_brand" required placeholder="Honda" /></label>
+                <label>Year <span class="muted small">(model_year)</span><input id="model_year" type="number" min="1900" max="2099" required placeholder="2024" /></label>
               </div>
               <div class="form-section-label">Details</div>
               <div class="grid two tight">
-                <label>Category
-                  <select id="vehicleCategory" required>
+                <label>Type <span class="muted small">(vehicle_type)</span>
+                  <select id="vehicle_type" required>
                     <option value="family">Family</option>
                     <option value="sport">Sport</option>
                     <option value="recreational">Recreational</option>
                     <option value="commercial">Commercial</option>
                   </select>
                 </label>
-                <label>Condition
-                  <select id="vehicleCondition" required>
-                    <option value="new">New</option>
-                    <option value="used">Used</option>
-                    <option value="trade-in">Trade-in</option>
+                <label>Condition <span class="muted small">(is_used)</span>
+                  <select id="is_used" required>
+                    <option value="0">New</option>
+                    <option value="1">Used / Trade-in</option>
                   </select>
                 </label>
               </div>
               <div class="grid two tight">
-                <label>Mileage<input id="vehicleMileage" type="number" min="0" placeholder="0" /></label>
-                <label>Price (USD)<input id="vehiclePrice" type="number" min="0" required placeholder="25000" /></label>
+                <label>Mileage <span class="muted small">(mileage)</span><input id="vehicleMileage" type="number" min="0" placeholder="0" /></label>
+                <label>Price (USD) <span class="muted small">(vehicle_price)</span><input id="vehicle_price" type="number" min="0" required placeholder="25000" /></label>
               </div>
               <div class="row" style="margin-top:4px">
                 <button class="btn primary" type="submit">Save vehicle</button>
@@ -113,7 +111,7 @@
           <div class="card">
             <h2>Vehicle List</h2>
             <div class="row">
-              <div class="input-wrap grow"><svg class="input-icon" width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg><input id="inventoryFilter" placeholder="Filter by VIN, make, or model…" /></div>
+              <div class="input-wrap grow"><svg class="input-icon" width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg><input id="inventoryFilter" placeholder="Filter by VIN or vehicle_brand…" /></div>
               <button class="btn" id="btnExportInventory" type="button">Export JSON</button>
             </div>
             <div id="inventoryList" class="table-wrap" aria-live="polite"></div>
