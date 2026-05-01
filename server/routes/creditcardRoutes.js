@@ -1,3 +1,4 @@
+// ------ Setup ------
 const express = require("express");
 const router = express.Router();
 const prisma = require('../../prisma/prisma');
@@ -6,7 +7,7 @@ const prisma = require('../../prisma/prisma');
 router.get('/', async (req, res) => {
     try {
         const credit_cards = await prisma.credit_card.findMany({
-            include: { Customer: true },
+            include: { Customer: true }, // Join the related Customer for each card
         });
         res.json(credit_cards);
     } catch (error) {
@@ -18,7 +19,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const credit_card = await prisma.credit_card.findUnique({
-            where: { credit_card_number: Number(req.params.id) },
+            where: { credit_card_number: Number(req.params.id) }, // Cast param string to number
             include: { Customer: true },
         });
         if (!credit_card) return res.status(404).json({ error: 'Credit card not found' });
@@ -42,7 +43,7 @@ router.post('/', async (req, res) => {
             },
             include: { Customer: true },
         });
-        res.status(201).json(credit_card);
+        res.status(201).json(credit_card); // 201 Created
     } catch (error) { 
         res.status(400).json({ error: 'Failed to create credit card' });
     }
@@ -55,6 +56,7 @@ router.put('/:id', async (req, res) => {
         const credit_card = await prisma.credit_card.update({
             where: { credit_card_number: Number(req.params.id) },
             data: {
+                // Spread each field only if it was provided in the request body (partial update pattern)
                 ...(credit_card_number !== undefined && { credit_card_number }),
                 ...(holder_name !== undefined && { holder_name }),
                 ...(security_code !== undefined && { security_code }),
@@ -65,6 +67,7 @@ router.put('/:id', async (req, res) => {
         });
         res.json(credit_card);
     } catch (error) {
+        // Prisma error P2025 = record not found
         if (error.code === 'P2025') {
             return res.status(404).json({ error: 'Credit card not found' });
         }
@@ -78,8 +81,9 @@ router.delete('/:id', async (req, res) => {
         await prisma.credit_card.delete({
             where: { credit_card_number: Number(req.params.id) },
         });
-        res.status(204).send();
+        res.status(204).send(); // 204 No Content — successful delete with no response body
     } catch (error) {
+        // Prisma error P2025 = record not found
         if (error.code === 'P2025') {
             return res.status(404).json({ error: 'Credit card not found' });
         }

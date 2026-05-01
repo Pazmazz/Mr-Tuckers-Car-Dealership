@@ -1,6 +1,7 @@
+// ------ Setup ------
 const express = require("express");
 const router = express.Router();
-const prisma = require('../../prisma/prisma');
+const prisma = require('../../prisma/prisma'); // Shared Prisma client instance
 
 // Get all vehicles
 router.get('/', async (req, res) => {

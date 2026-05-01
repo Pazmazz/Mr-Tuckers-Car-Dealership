@@ -1046,7 +1046,7 @@ $("#btnLoadDemo") && $("#btnLoadDemo").addEventListener("click", () => {
   rerenderAll();
 });
 
-$("#vehicleForm") && $("#vehicleForm").addEventListener("submit", (e) => {
+$("#vehicleForm") && $("#vehicleForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
     const v = {
@@ -1061,6 +1061,20 @@ $("#vehicleForm") && $("#vehicleForm").addEventListener("submit", (e) => {
       stock: Number($("#vehicleStock").value)
     };
     upsertVehicle(v);
+    
+    // ----- Jaylen API Routing -----
+    // Add vehicle data into prisma
+    const saved = await apiPost("inventory", {
+      vehicle_brand: v.vehicle_brand,
+      model_year: v.model_year,
+      vehicle_type: v.vehicle_types,
+      is_used: v.is_used,
+      mileage: v.mileage,
+      vehicle_price: v.vehicle_price,
+      stock: v.stock         
+    });
+    // ------------------------------
+
     toast("Vehicle saved.");
     $("#vehicleForm").reset();
     $("#vehicleId").value = "";
@@ -1077,7 +1091,7 @@ $("#btnVehicleReset") && $("#btnVehicleReset").addEventListener("click", () => {
 
 $("#inventoryFilter") && $("#inventoryFilter").addEventListener("input", renderInventory);
 
-$("#inventoryList") && $("#inventoryList").addEventListener("click", (e) => {
+$("#inventoryList") && $("#inventoryList").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
 
@@ -1085,7 +1099,7 @@ $("#inventoryList") && $("#inventoryList").addEventListener("click", (e) => {
   const vin = btn.dataset.vin;
 
   if (act === "editVehicle") {
-    const v = state.vehicles.find(x => x.vin === vin);
+    const v = state.vehicles.find(x => x.vehicle_id === Number(id));
     if (!v) return;
     $("#vehicleId").value = v.id || "";
     $("#vehicleVin").value = v.vin;
@@ -1100,7 +1114,14 @@ $("#inventoryList") && $("#inventoryList").addEventListener("click", (e) => {
   }
 
   if (act === "delVehicle") {
-    deleteVehicle(vin);
+    const v = state.vehicles.find(x => x.vehicle_id === Number(id));
+    deleteVehicle(Number(id));
+
+    // ----- Jaylen API Routing -----
+    // Delete vehicle data from prisma
+    await apiDelete(`inventory/${v.vehicle_id}`);
+    // ------------------------------
+
     toast("Vehicle deleted.");
     rerenderAll();
   }
@@ -1124,7 +1145,8 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
     };
     upsertCustomer(c);
 
-    // Add form data into prisma
+    // ----- Jaylen API Routing -----
+    // Add customer form data into prisma
     const saved = await apiPost("customers", {
       customer_name: c.customer_name,
       credit_score: c.credit_score,
@@ -1133,7 +1155,8 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
       drivers_license_id: c.drivers_license_id,
       credit_card_number: c.credit_card_number        
     });
-
+    // ------------------------------
+    
     const idx = state.customers.findIndex(cu => cu.drivers_license_id === c.drivers_license_id);
     if (idx >= 0 && saved?.customer_id) {
       state.customers[idx].customer_id = saved.customer_id;
@@ -1181,8 +1204,10 @@ $("#customerList") && $("#customerList").addEventListener("click", async (e) => 
     if (!c) return;
     deleteCustomer(Number(id));
 
-    // Delete form data from prisma
+    // ----- Jaylen API Routing -----
+    // Delete customer data from prisma
     await apiDelete(`customers/${c.customer_id}`);
+    // ------------------------------
 
     toast("Customer deleted.");
     rerenderAll();
@@ -1508,12 +1533,15 @@ $("#employeeForm") && $("#employeeForm").addEventListener("submit", async (e) =>
     };
     upsertEmployee(emp);
 
+    // ----- Jaylen API Routing -----
+    // Add employee data into prisma
     const saved = await apiPost("register-employee", {
       employee_name: emp.employee_name,
       department: emp.department,
       manager: emp.manager,
       commission: emp.commission
     });
+    // ------------------------------
 
     const idx = state.employees.findIndex(cu => cu.employee_name === emp.employee_name);
     if (idx >= 0 && saved?.employee_id) {
@@ -1562,7 +1590,10 @@ $("#employeesTable") && $("#employeesTable").addEventListener("click", async (e)
     if (!emp) return;
     deleteEmployee(id);
 
+    // ----- Jaylen API Routing -----
+    // Delete employee data from prisma
     await apiDelete(`register-employee/${emp.employee_id}`);
+    // ------------------------------
     
     toast("Employee removed.");
     rerenderAll();
@@ -1588,6 +1619,8 @@ $("#dlForm") && $("#dlForm").addEventListener("submit", async (e) => {
     };
     upsertDriverLicense(dl);
 
+    // ----- Jaylen API Routing -----
+    // Add driver's license data into prisma
     await apiPost("driver-license", {
       drivers_license_id: dl.drivers_license_id,
       holder_name : dl.holder_name,
@@ -1599,6 +1632,7 @@ $("#dlForm") && $("#dlForm").addEventListener("submit", async (e) => {
       weight: dl.weight,
       restrictions: dl.restrictions
     });
+    // ------------------------------
 
     toast("Driver's license saved.");
     $("#dlForm").reset();
@@ -1640,7 +1674,10 @@ $("#dlList") && $("#dlList").addEventListener("click", (e) => {
     const dl = state.driverLicenses.find(x => x.id === id);
     deleteDriverLicense(id);
 
+    // ----- Jaylen API Routing -----
+    // Delete driver's license data from prisma
     apiDelete(`driver-license/${dl.drivers_license_id}`);
+    // ------------------------------
 
     toast("License deleted.");
     rerenderAll();
@@ -1662,6 +1699,8 @@ $("#ccForm") && $("#ccForm").addEventListener("submit", async (e) => {
     };
     upsertCreditCard(cc);
 
+    // ----- Jaylen API Routing -----
+    // Add credit card data into prisma
     await apiPost("creditcard", {
       credit_card_number: cc.credit_card_number,
       holder_name : cc.holder_name,
@@ -1669,6 +1708,7 @@ $("#ccForm") && $("#ccForm").addEventListener("submit", async (e) => {
       expiration_date: cc.expiration_date,
       zip_code: cc.zip_code
     });
+    // ------------------------------
 
     toast("Credit card saved.");
     $("#ccForm").reset();
@@ -1706,7 +1746,10 @@ $("#ccList") && $("#ccList").addEventListener("click", async (e) => {
     const cc = state.creditCards.find(x => x.id === id);
     deleteCreditCard(id);
     
+    // ----- Jaylen API Routing -----
+    // Delete credit card data from prisma
     apiDelete(`creditcard/${cc.credit_card_number}`);
+    // ------------------------------
     
     toast("Card deleted.");
     rerenderAll();

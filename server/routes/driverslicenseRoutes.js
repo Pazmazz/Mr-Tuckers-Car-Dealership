@@ -1,3 +1,4 @@
+// ------ Setup ------
 const express = require("express");
 const router = express.Router();
 const prisma = require('../../prisma/prisma');
@@ -46,7 +47,7 @@ router.post('/', async (req, res) => {
             },
             include: { Customer: true },
         });
-        res.status(201).json(drivers_license);
+        res.status(201).json(drivers_license); // 201 Created
     } catch (error) {
         res.status(400).json({ error: 'Failed to create driver\'s license' });
     }
@@ -58,7 +59,8 @@ router.put('/:id', async (req, res) => {
         const { drivers_license_id, holder_name, expiration_date, address, birth_date, sex, eye_color, weight, restrictions } = req.body;
         const drivers_license = await prisma.driver_s_License.update({
             where: { drivers_license_id: Number(req.params.id) },
-            data: {
+            data: { 
+                // Spread each field only if it was provided in the request body (partial update pattern)
                 ...(drivers_license_id !== undefined && { drivers_license_id }),
                 ...(holder_name !== undefined && { holder_name }),
                 ...(expiration_date !== undefined && { expiration_date }),
@@ -71,8 +73,9 @@ router.put('/:id', async (req, res) => {
             },
             include: { Customer: true },
         });
-        res.json(drivers_license);
+        res.json(drivers_license); 
     } catch (error) {
+        // Prisma P2025 = record to update not found
         if (error.code === 'P2025') {
             return res.status(404).json({ error: 'Driver\'s license not found' });
         }
@@ -86,8 +89,9 @@ router.delete('/:id', async (req, res) => {
         await prisma.driver_s_License.delete({
             where: { drivers_license_id: Number(req.params.id) },
         });
-        res.status(204).send();
+        res.status(204).send(); // 204 No Content — successful delete with no response body
     } catch (error) {
+        // Prisma P2025 = record to delete not found
         if (error.code === 'P2025') {
             return res.status(404).json({ error: 'Driver\'s license not found' });
         }

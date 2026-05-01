@@ -1,15 +1,16 @@
+// ------ Setup ------
 const express = require("express");
 const router = express.Router();
-const prisma = require('../../prisma/prisma');
+const prisma = require('../../prisma/prisma'); // Shared Prisma client instance
 
 // Get all customers
 router.get('/', async (req, res) => {
     try {
         const customers = await prisma.customer.findMany({
             include: {
-                Driver_s_License: true,
-                Credit_card: true,
-                Transactions: true,
+                Driver_s_License: true, // Related driver's license record
+                Credit_card: true, // Related credit card record
+                Transactions: true, // All transactions linked to this customer
             },
         });
         res.json(customers);
@@ -55,15 +56,13 @@ router.post('/', async (req, res) => {
                 Transactions: true,
             },
         });
-        res.status(201).json(customer)
+        res.status(201).json(customer); // 201 Created
     } catch (error) {
         if (error.code === 'P2003') {
           // Prisma foreign key constraint error
           return res.status(400).json({ error: 'Invalid drivers_license_id or credit_card_number — referenced record does not exist' });
         }
-        console.error(error);
-        res.status(400).json({ error: error.message });
-        //res.status(400).json({ error: 'Failed to create customer' });
+        res.status(400).json({ error: 'Failed to create customer' });
     }
 });
 
@@ -74,6 +73,7 @@ router.put('/:id', async (req, res) => {
         const customer = await prisma.customer.update({
             where: { customer_id: Number(req.params.id) },
             data: {
+                // Spread each field only if provided (partial update pattern)
                 ...(customer_name    !== undefined && { customer_name }),
                 ...(credit_score     !== undefined && { credit_score }),
                 ...(drivers_license_id !== undefined && { drivers_license_id }),
@@ -87,9 +87,11 @@ router.put('/:id', async (req, res) => {
         });
         res.json(customer);
     } catch (error) {
+        // Prisma P2025 = record to update not found
         if (error.code === 'P2025') {
             return res.status(404).json({ error: 'Customer not found' });
         }
+        // Prisma P2003 = foreign key constraint violation on the updated fields
         if (error.code === 'P2003') {
             return res.status(400).json({ error: 'Invalid drivers_license_id or credit_card_number' });
         }
@@ -103,11 +105,13 @@ router.delete('/:id', async (req, res) => {
         await prisma.customer.delete({
             where: { customer_id: Number(req.params.id) },
         });
-        res.status(204).send();
+        res.status(204).send(); // 204 No Content — successful delete with no response body
     } catch (error) {
+        // Prisma P2025 = record to delete not found
         if (error.code === 'P2025') {
             return res.status(404).json({ error: 'Customer not found' });
         }
+        // Prisma P2003 = delete blocked by a related record (e.g. existing transactions)
         if (error.code === 'P2003') {
             return res.status(400).json({ error: 'Cannot delete — customer has related transactions' });
         }
@@ -123,7 +127,7 @@ router.get('/:id/transactions', async (req, res) => {
             include: { Transactions: true },
         });
         if (!customer) return res.status(404).json({ error: 'Customer not found' });
-        res.json(customer.Transactions);
+        res.json(customer.Transactions); // Return just the transactions, not the full customer object
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch transactions' });
     }
