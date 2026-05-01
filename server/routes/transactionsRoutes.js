@@ -5,7 +5,7 @@ const prisma = require('../../prisma/prisma');
 // Get all transactions
 router.get('/', async (req, res) => {
     try {
-        const transactions = await prisma.vehicle.findMany({
+        const transactions = await prisma.transactions.findMany({
             include: {
                 Driver_s_License: true,
                 Credit_card: true
@@ -13,88 +13,95 @@ router.get('/', async (req, res) => {
         });
         res.json(transactions);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch vehicles' });
+        res.status(500).json({ error: 'Failed to fetch transactions' });
     }
 });
 
 // Get a single transaction
 router.get('/:id', async (req, res) => {
     try {
-        const vehicle = await prisma.vehicle.findUnique({
-            where: { vehicle_id: Number(req.params.id) },
+        const transaction = await prisma.transactions.findUnique({
+            where: { transaction_id: Number(req.params.id) },
             include: {
-                Transactions: true,
+                Driver_s_License: true,
+                Credit_card: true
             },
         });
-        if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
-        res.json(vehicle);
+        if (!transaction) return res.status(404).json({ error: 'Transactions not found' });
+        res.json(transaction);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch vehicle' });
+        res.status(500).json({ error: 'Failed to fetch transactions' });
     }
 });
 
 // Create a new transaction
 router.post('/', async (req, res) => {
     try {
-        const { vehicle_type, vehicle_brand, model_year, is_used, mileage, vehicle_price } = req.body;
-        const vehicle = await prisma.vehicle.create({
+        const { date, time, discount, price_paid, price_offered, employee_id, customer_id, vehicle_id } = req.body;
+        const transaction = await prisma.transactions.create({
             data: { 
-                vehicle_type, 
-                vehicle_brand, 
-                model_year, 
-                is_used, 
-                mileage, 
-                vehicle_price
+                date, 
+                time, 
+                discount, 
+                price_paid, 
+                price_offered, 
+                employee_id, 
+                customer_id, 
+                vehicle_id
             },
             include: {
-                Transactions: true,
+                Driver_s_License: true,
+                Credit_card: true
             },
         });
-        res.status(201).json(vehicle)
+        res.status(201).json(transaction)
     } catch (error) {
-        res.status(400).json({ error: 'Failed to create vehicle' });
+        res.status(400).json({ error: 'Failed to create transaction' });
     }
 });
 
 // Update a pre-existing transaction
 router.put('/:id', async (req, res) => {
     try {
-        const { vehicle_type, vehicle_brand, model_year, is_used, mileage, vehicle_price } = req.body;
-        const vehicle = await prisma.vehicle.update({
-            where: { vehicle_id: Number(req.params.id) },
+        const { date, time, discount, price_paid, price_offered, employee_id, customer_id, vehicle_id } = req.body;
+        const transaction = await prisma.transaction.update({
+            where: { transaction_id: Number(req.params.id) },
             data: {
-                ...(vehicle_type    !== undefined && { vehicle_type }),
-                ...(vehicle_brand     !== undefined && { vehicle_brand }),
-                ...(model_year !== undefined && { drivers_lmodel_yearcense_id }),
-                ...(is_used !== undefined && { is_used }),
-                ...(mileage !== undefined && { mileage }),
-                ...(vehicle_price !== undefined && { vehicle_price }),
+                ...(date    !== undefined && { date }),
+                ...(time     !== undefined && { time }),
+                ...(discount !== undefined && { discount }),
+                ...(price_paid !== undefined && { price_paid }),
+                ...(price_offered !== undefined && { price_offered }),
+                ...(employee_id !== undefined && { employee_id }),
+                ...(customer_id !== undefined && { customer_id }),
+                ...(vehicle_id !== undefined && { vehicle_id })
             },
             include: {
-                Transactions: true,
+                Driver_s_License: true,
+                Credit_card: true
             },
         });
-        res.json(vehicle);
+        res.json(transaction);
     } catch (error) {
         if (error.code === 'P2025') {
-            return res.status(404).json({ error: 'Vehicle not found' });
+            return res.status(404).json({ error: 'Transaction not found' });
         }
-        res.status(400).json({ error: 'Failed to update vehicle' });
+        res.status(400).json({ error: 'Failed to update transaction' });
     }
 });
 
 // Delete a transaction
 router.delete('/:id', async (req, res) => {
     try {
-        await prisma.vehicle.delete({
-            where: { vehicle_id: Number(req.params.id) },
+        await prisma.transaction.delete({
+            where: { transaction_id: Number(req.params.id) },
         });
         res.status(204).send();
     } catch (error) {
         if (error.code === 'P2025') {
-            return res.status(404).json({ error: 'Vehicle not found' });
+            return res.status(404).json({ error: 'Transaction not found' });
         }
-        res.status(400).json({ error: 'Failed to delete vehicle' });
+        res.status(400).json({ error: 'Failed to delete transaction' });
     }
 });
 
