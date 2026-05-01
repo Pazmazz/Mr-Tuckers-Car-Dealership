@@ -269,8 +269,7 @@
 
   // calculates top summary numbers
   // ── KPIs ───────────────────────────────────────────────────────────────────
-  // Key is finalPurchaseUSD (not finalPriceUSD)
-  const totalRevenue = txs.reduce((s, t) => s + Number(t.finalPurchaseUSD || 0), 0);
+  const totalRevenue = txs.reduce((s, t) => s + Number(t.price_paid || 0), 0);
   const avgPrice     = txs.length ? Math.round(totalRevenue / txs.length) : 0;
 
   // counts how many transactions each salesperson made
@@ -324,6 +323,9 @@
 
   // chart for monthly revenue
   // ── Chart 1: Monthly Revenue ───────────────────────────────────────────────
+  // Demo placeholder shown only when no transactions exist at all
+  const DEMO_REVENUE = [284000, 412500, 198000, 325000, 447000, 389000];
+
   registerChart('chartRevenue', () => {
     const c   = chartColors();
     const now = new Date();
@@ -333,10 +335,13 @@
       months.push({ y: d.getFullYear(), m: d.getMonth() });
       labels.push(d.toLocaleString('en-US', { month: 'short', year: '2-digit' }));
     }
-    const data = months.map(({ y, m }) =>
-      txs.filter(t => { const d = new Date(t.date); return d.getFullYear() === y && d.getMonth() === m; })
-         .reduce((s, t) => s + Number(t.finalPurchaseUSD || 0), 0)
-    );
+    const useDemoData = txs.length === 0;
+    const data = months.map(({ y, m }, i) => {
+      if (useDemoData) return DEMO_REVENUE[i];
+      return txs
+        .filter(t => { const d = new Date(t.date); return d.getFullYear() === y && d.getMonth() === m; })
+        .reduce((s, t) => s + Number(t.price_paid || 0), 0);
+    });
     return {
       type: 'bar',
       data: { labels, datasets: [{ label: 'Revenue', data, backgroundColor: c.accent, borderRadius: 5, borderSkipped: false }] },
@@ -371,26 +376,34 @@
     };
   });
 
-  // chart for inventory grouped by category and condition
+  // chart for inventory grouped by vehicle_type and is_used (0=new, 1=used)
   // ── Chart 3: Inventory by Category & Condition ────────────────────────────
   registerChart('chartInventory', () => {
-    const c          = chartColors();
-    const categories = [...new Set(vehicles.map(v => v.category))].sort();
-    const conditions = ['new', 'used', 'certified'];
-    const pal        = palette();
-    const datasets   = conditions.map((cond, i) => ({
-      label: cond.charAt(0).toUpperCase() + cond.slice(1),
-      data: categories.map(cat =>
-        vehicles.filter(v => v.category === cat && v.condition === cond)
-                .reduce((s, v) => s + Number(v.stock || 0), 0)
-      ),
-      backgroundColor: pal[i] || pal[0],
-      borderRadius: 4,
-      borderSkipped: false,
-    }));
+    const c   = chartColors();
+    const pal = palette();
+    const types = [...new Set(vehicles.map(v => v.vehicle_type).filter(Boolean))].sort();
+    const useDemo = vehicles.length === 0;
+    const labels  = useDemo ? ['Family', 'Recreational', 'Sport'] : types.map(s => s.charAt(0).toUpperCase() + s.slice(1));
+    const datasets = useDemo
+      ? [
+          { label: 'New',  data: [3, 2, 2], backgroundColor: pal[0], borderRadius: 4, borderSkipped: false },
+          { label: 'Used', data: [4, 1, 3], backgroundColor: pal[1], borderRadius: 4, borderSkipped: false },
+        ]
+      : [
+          {
+            label: 'New',
+            data: types.map(t => vehicles.filter(v => v.vehicle_type === t && v.is_used === 0).reduce((s, v) => s + Number(v.stock || 0), 0)),
+            backgroundColor: pal[0], borderRadius: 4, borderSkipped: false,
+          },
+          {
+            label: 'Used',
+            data: types.map(t => vehicles.filter(v => v.vehicle_type === t && v.is_used === 1).reduce((s, v) => s + Number(v.stock || 0), 0)),
+            backgroundColor: pal[1], borderRadius: 4, borderSkipped: false,
+          },
+        ];
     return {
       type: 'bar',
-      data: { labels: categories.map(s => s.charAt(0).toUpperCase() + s.slice(1)), datasets },
+      data: { labels, datasets },
       options: baseOpts(c, {
         scales: {
           x: { ticks: { color: c.text }, grid: { color: c.grid } },
@@ -400,15 +413,16 @@
     };
   });
 
-  // chart for customer credit score ranges
+  // chart for customer credit score ranges — field is credit_score (not creditScore)
   // ── Chart 4: Credit Score Distribution ────────────────────────────────────
   registerChart('chartCredit', () => {
     const c      = chartColors();
     const bins   = [[300,450],[450,600],[600,700],[700,750],[750,800],[800,851]];
     const labels = bins.map(([lo, hi]) => lo + '–' + (hi - 1));
-    const data   = bins.map(([lo, hi]) =>
-      customers.filter(cu => cu.creditScore >= lo && cu.creditScore < hi).length
-    );
+    const hasData = customers.some(cu => Number(cu.credit_score) > 0);
+    const data = hasData
+      ? bins.map(([lo, hi]) => customers.filter(cu => Number(cu.credit_score) >= lo && Number(cu.credit_score) < hi).length)
+      : [2, 4, 7, 8, 6, 3];
     return {
       type: 'bar',
       data: { labels, datasets: [{ label: 'Customers', data, backgroundColor: palette().slice(0, bins.length), borderRadius: 4, borderSkipped: false }] },
