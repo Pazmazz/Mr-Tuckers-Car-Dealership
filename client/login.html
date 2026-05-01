@@ -1,25 +1,35 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- basic page setup -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
+
+  <!-- makes sure saved theme loads before page shows -->
   <!-- No-flash theme: apply before first paint -->
   <script>(function(){var t=localStorage.getItem('mt_theme');if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.classList.add('notransition');})();</script>
+
+  <!-- font loading and main stylesheet -->
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- page title in browser tab -->
   <title>Sign in • Mr. Tucker's DMS</title>
 </head>
 <body class="auth-page">
 
+  <!-- background decoration for login page -->
   <div class="auth-bg" aria-hidden="true">
     <div class="auth-bg-orb orb-1"></div>
     <div class="auth-bg-orb orb-2"></div>
     <div class="auth-bg-orb orb-3"></div>
   </div>
 
+  <!-- main login/register card -->
   <div class="auth-card">
 
+    <!-- app branding -->
     <div class="auth-brand">
       <div class="logo" aria-hidden="true">MT</div>
       <div>
@@ -28,6 +38,7 @@
       </div>
     </div>
 
+    <!-- tabs for switching between sign in and register -->
     <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
       <button class="auth-tab active" id="tabLogin" role="tab"
               aria-selected="true" aria-controls="panelLogin"
@@ -40,19 +51,28 @@
     <!-- Login -->
     <div class="auth-panel" id="panelLogin" role="tabpanel" aria-labelledby="tabLogin">
       <form id="loginForm">
+        <!-- username input -->
         <div class="field floating">
           <input id="loginUser" type="text" placeholder=" " autocomplete="username" required />
           <label for="loginUser">Username</label>
         </div>
+
+        <!-- password input -->
         <div class="field floating">
           <input id="loginPass" type="password" placeholder=" " autocomplete="current-password" required />
           <label for="loginPass">Password</label>
         </div>
+
+        <!-- sign in button -->
         <button class="btn primary full" type="submit" style="margin-top:4px">
           <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8.5 1l5.5 6.5-5.5 6.5M14 7.5H1"/></svg>
           Sign in
         </button>
+
+        <!-- loads example data -->
         <button class="btn ghost full" type="button" id="btnLoadDemo">Load demo data</button>
+
+        <!-- little help text -->
         <p class="auth-hint">Click "Load demo data" to create a demo account (demo / demo).</p>
       </form>
     </div>
@@ -60,14 +80,19 @@
     <!-- Register -->
     <div class="auth-panel" id="panelRegister" role="tabpanel" aria-labelledby="tabRegister" hidden>
       <form id="registerForm">
+        <!-- full name -->
         <div class="field floating">
           <input id="regName" type="text" placeholder=" " required />
           <label for="regName">Full name</label>
         </div>
+
+        <!-- username -->
         <div class="field floating">
           <input id="regUser" type="text" placeholder=" " autocomplete="username" required />
           <label for="regUser">Username</label>
         </div>
+
+        <!-- choose role -->
         <div>
           <div class="field-label">Role</div>
           <select id="regRole" required>
@@ -75,25 +100,36 @@
             <option value="manager">Manager</option>
           </select>
         </div>
+
+        <!-- password -->
         <div class="field floating">
           <input id="regPass" type="password" placeholder=" " autocomplete="new-password" required />
           <label for="regPass">Password</label>
         </div>
+
+        <!-- confirm password -->
         <div class="field floating">
           <input id="regPassConfirm" type="password" placeholder=" " autocomplete="new-password" required />
           <label for="regPassConfirm">Confirm password</label>
         </div>
+
+        <!-- create account button -->
         <button class="btn primary full" type="submit" style="margin-top:4px">
           <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="7.5" cy="4.5" r="2.5"/><path d="M2.5 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>
           Create account
         </button>
+
+        <!-- help text under register form -->
         <p class="auth-hint">Create an account to access the system.</p>
       </form>
     </div>
 
   </div>
 
+  <!-- toast notification popup -->
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+
+  <!-- main javascript file -->
   <script src="js/app.js"></script>
 </body>
 </html>

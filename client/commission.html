@@ -1,17 +1,35 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- basic page setup stuff -->
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><meta name="color-scheme" content="dark light" />
+  
+  <!-- this checks saved theme before page loads so it does not flash weird -->
   <script>(function(){var t=localStorage.getItem('mt_theme');if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.classList.add('notransition');})();</script>
+  
+  <!-- makes the page content fade in nicely -->
   <style>.content{opacity:0;transform:translateY(6px)}</style>
+  
+  <!-- google fonts connection -->
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+  <!-- main stylesheet for the whole site -->
   <link rel="stylesheet" href="css/styles.css" />
+  
+  <!-- page title shown in browser tab -->
   <title>Commission • Mr. Tucker's DMS</title>
 </head>
 <body>
+<!-- main app wrapper -->
 <div class="app-shell">
+  
+  <!-- left sidebar navigation -->
   <nav class="sidebar" aria-label="Primary navigation">
+    
+    <!-- site logo and name -->
     <div class="sidebar-brand"><div class="logo" aria-hidden="true">MT</div><div><div class="brand-title">Mr. Tucker's DMS</div><div class="brand-subtitle">Dealership Management</div></div></div>
+    
+    <!-- first group of nav links -->
     <div class="nav-section">
       <div class="nav-label">Main</div>
       <a class="nav-item" href="dashboard.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="1" width="5.5" height="5.5" rx="1"/><rect x="1" y="8.5" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1"/></svg>Dashboard</a>
@@ -21,48 +39,73 @@
       <a class="nav-item" href="employees.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="10.5" cy="4" r="2"/><path d="M0.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M10 8.6c2.21.47 3.5 2.3 3.5 4.4"/></svg>Employees<span class="nav-badge" id="nbEmployees"></span></a>
       <a class="nav-item" href="register-employee.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="4" r="2.5"/><path d="M1.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M11.5 1v5M9 3.5h5"/></svg>Register Employee</a>
       <a class="nav-item" href="reports.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>Reports</a>
+      <!-- analytics link is hidden unless allowed -->
       <a class="nav-item" id="navAnalytics" href="analytics.html" hidden><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 13.5V8.5M5.5 13.5V5.5M9.5 13.5V3.5M13.5 13.5V1.5"/></svg>Analytics</a>
     </div>
+    
+    <!-- records section in sidebar -->
     <div class="nav-section">
       <div class="nav-label">Records</div>
       <a class="nav-item" href="driver-license.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="3" width="12" height="9" rx="1.5"/><path d="M4 6.5h3M4 9h2M9.5 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>Driver Licenses</a>
       <a class="nav-item" href="credit-card.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1" y="3.5" width="13" height="8" rx="1.5"/><path d="M1 6.5h13"/></svg>Credit Cards</a>
     </div>
+    
+    <!-- tools section in sidebar -->
     <div class="nav-section">
       <div class="nav-label">Tools</div>
+      <!-- this page is active right now -->
       <a class="nav-item active" href="commission.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 12l9-9M5 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM10 9a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>Commission</a>
       <a class="nav-item" href="search.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg>Search</a>
       <a class="nav-item" href="settings.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M7.5 1l1.2 3.6 3.8-.4-2.4 2.9 1.2 3.6-3.8-1.8-3.8 1.8 1.2-3.6L2.5 4.2l3.8.4z"/></svg>Discount Calc</a>
       <a class="nav-item" href="utilities.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 7.5h10M7.5 2.5v10M4.5 4.5l6 6M10.5 4.5l-6 6"/></svg>Utilities</a>
     </div>
+    
+    <!-- little team status area at bottom -->
     <div class="sidebar-footer">
       <div class="nav-label">Team <span id="onlineCount" style="font-weight:500;text-transform:none;letter-spacing:0;font-size:11px;margin-left:4px;color:var(--ok)"></span></div>
       <div id="peopleOnline" class="people-list"></div>
     </div>
   </nav>
 
+  <!-- right side main app content -->
   <div class="app-body">
+    
+    <!-- top bar -->
     <header class="topbar">
+      <!-- search bar in the top -->
       <div class="topbar-search"><svg class="topbar-search-icon" width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg><input class="topbar-search-input" id="topbarSearchInput" type="search" placeholder="Search anything…" autocomplete="off" /></div>
       <div class="topbar-spacer"></div>
+      
+      <!-- profile info -->
       <div class="topbar-profile-chip" id="topbarProfile"><div class="topbar-avatar" id="topbarAvatarEl">?</div><div><div class="topbar-profile-name" id="topbarUsername">Me</div><div class="topbar-profile-role" id="topbarRole">Guest</div></div></div>
+      
+      <!-- theme toggle button -->
       <button id="btnTheme" class="btn-icon" type="button" aria-label="Toggle theme"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 7.5a5.5 5.5 0 0 0 9.9 3.28A5.5 5.5 0 0 1 6.22 1.1 5.5 5.5 0 0 0 2 7.5z"/></svg></button>
+      
+      <!-- logout button starts hidden -->
       <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
     </header>
 
+    <!-- main page content -->
     <main class="content">
+      
+      <!-- page heading section -->
       <div class="page-hero hero-teal">
         <div class="page-hero-tag">Tools</div>
         <h1>Commission Calculator</h1>
         <p>Calculate monthly salesperson commissions with tiered rates.</p>
       </div>
 
+      <!-- main panel holding form and info -->
       <div class="panel">
         <div class="grid two">
-
+          
+          <!-- left card where user enters info -->
           <div class="card accent-border">
             <h2>Calculate Commission</h2>
             <p class="muted small" style="margin-bottom:16px">Enter a month and salesperson username to compute their commission based on completed sales.</p>
+            
+            <!-- commission form -->
             <form id="commissionForm" class="form">
               <label>Month<input id="commMonth" type="month" required /></label>
               <label>Salesperson username<input id="commUser" required placeholder="salesperson1" /></label>
@@ -73,13 +116,18 @@
                 </button>
               </div>
             </form>
+            
+            <!-- result box shows after calculation -->
             <div id="commissionResult" class="callout" hidden style="margin-top:16px"></div>
           </div>
-
+          
+          <!-- this card explains the 3 commission levels -->
           <div class="card">
             <h2>Commission Tiers</h2>
             <p class="muted small" style="margin-bottom:16px">Rates are computed monthly per salesperson based on total sales volume.</p>
             <div>
+              
+              <!-- first tier -->
               <div class="tier-row">
                 <div class="tier-row-info">
                   <div class="tier-row-title">Tier 1</div>
@@ -87,6 +135,8 @@
                 </div>
                 <span class="badge">5%</span>
               </div>
+              
+              <!-- second tier -->
               <div class="tier-row">
                 <div class="tier-row-info">
                   <div class="tier-row-title">Tier 2</div>
@@ -94,6 +144,8 @@
                 </div>
                 <span class="badge" style="background:var(--warn-soft);color:var(--warn);border-color:rgba(180,83,9,0.22)">7%</span>
               </div>
+              
+              <!-- third tier -->
               <div class="tier-row">
                 <div class="tier-row-info">
                   <div class="tier-row-title">Tier 3</div>
@@ -105,7 +157,8 @@
           </div>
 
         </div>
-
+        
+        <!-- shows total sales info for all salespeople -->
         <div class="card">
           <h2>Sales Overview</h2>
           <p class="muted small" style="margin-bottom:12px">All-time totals by salesperson across all completed transactions.</p>
@@ -116,7 +169,11 @@
     </main>
   </div>
 </div>
+
+<!-- small popup message area -->
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+
+<!-- connects this page to the main javascript file -->
 <script src="js/app.js"></script>
 </body>
 </html>

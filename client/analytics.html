@@ -1,17 +1,30 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- basic page setup -->
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><meta name="color-scheme" content="dark light" />
+
+  <!-- loads saved theme before the page shows -->
   <script>(function(){var t=localStorage.getItem('mt_theme');if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.classList.add('notransition');})();</script>
+
+  <!-- small page reveal effect -->
   <style>.content{opacity:0;transform:translateY(6px)}</style>
+
+  <!-- fonts and main stylesheet -->
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- title shown in browser tab -->
   <title>Analytics • Mr. Tucker's DMS</title>
 </head>
 <body>
 <div class="app-shell">
+  <!-- left sidebar navigation -->
   <nav class="sidebar" aria-label="Primary navigation">
+    <!-- logo / system name -->
     <div class="sidebar-brand"><div class="logo" aria-hidden="true">MT</div><div><div class="brand-title">Mr. Tucker's DMS</div><div class="brand-subtitle">Dealership Management</div></div></div>
+
+    <!-- main section links -->
     <div class="nav-section">
       <div class="nav-label">Main</div>
       <a class="nav-item" href="dashboard.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="1" width="5.5" height="5.5" rx="1"/><rect x="1" y="8.5" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1"/></svg>Dashboard</a>
@@ -21,13 +34,18 @@
       <a class="nav-item" href="employees.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="10.5" cy="4" r="2"/><path d="M0.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M10 8.6c2.21.47 3.5 2.3 3.5 4.4"/></svg>Employees<span class="nav-badge" id="nbEmployees"></span></a>
       <a class="nav-item" href="register-employee.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="4" r="2.5"/><path d="M1.5 13c0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5"/><path d="M11.5 1v5M9 3.5h5"/></svg>Register Employee</a>
       <a class="nav-item" href="reports.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="10" width="3" height="4" rx="0.5"/><rect x="6.5" y="6" width="3" height="8" rx="0.5"/><rect x="11" y="3" width="3" height="11" rx="0.5"/></svg>Reports</a>
+      <!-- current page is analytics -->
       <a class="nav-item active" id="navAnalytics" href="analytics.html" hidden><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 13.5V8.5M5.5 13.5V5.5M9.5 13.5V3.5M13.5 13.5V1.5"/></svg>Analytics</a>
     </div>
+
+    <!-- records section -->
     <div class="nav-section">
       <div class="nav-label">Records</div>
       <a class="nav-item" href="driver-license.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="3" width="12" height="9" rx="1.5"/><path d="M4 6.5h3M4 9h2M9.5 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>Driver Licenses</a>
       <a class="nav-item" href="credit-card.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="1" y="3.5" width="13" height="8" rx="1.5"/><path d="M1 6.5h13"/></svg>Credit Cards</a>
     </div>
+
+    <!-- tools section -->
     <div class="nav-section">
       <div class="nav-label">Tools</div>
       <a class="nav-item" href="commission.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 12l9-9M5 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM10 9a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>Commission</a>
@@ -35,6 +53,8 @@
       <a class="nav-item" href="settings.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M7.5 1l1.2 3.6 3.8-.4-2.4 2.9 1.2 3.6-3.8-1.8-3.8 1.8 1.2-3.6L2.5 4.2l3.8.4z"/></svg>Discount Calc</a>
       <a class="nav-item" href="utilities.html"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 7.5h10M7.5 2.5v10M4.5 4.5l6 6M10.5 4.5l-6 6"/></svg>Utilities</a>
     </div>
+
+    <!-- team list at bottom -->
     <div class="sidebar-footer">
       <div class="nav-label">Team <span id="onlineCount" style="font-weight:500;text-transform:none;letter-spacing:0;font-size:11px;margin-left:4px;color:var(--ok)"></span></div>
       <div id="peopleOnline" class="people-list"></div>
@@ -42,23 +62,34 @@
   </nav>
 
   <div class="app-body">
+    <!-- top bar with search and profile -->
     <header class="topbar">
       <div class="topbar-search"><svg class="topbar-search-icon" width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3.5 3.5"/></svg><input class="topbar-search-input" id="topbarSearchInput" type="search" placeholder="Search anything…" autocomplete="off" /></div>
       <div class="topbar-spacer"></div>
+
+      <!-- extra filter buttons -->
       <button class="btn-filter" type="button"><svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h11M4 8h7M6 12h3"/></svg>Sort by</button>
       <button class="btn-filter" type="button"><svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M1.5 3h12M4 7.5h7M6.5 12h2"/></svg>Filters</button>
+
+      <!-- current user display -->
       <div class="topbar-profile-chip" id="topbarProfile"><div class="topbar-avatar" id="topbarAvatarEl">?</div><div><div class="topbar-profile-name" id="topbarUsername">Me</div><div class="topbar-profile-role" id="topbarRole">Guest</div></div></div>
+
+      <!-- theme toggle -->
       <button id="btnTheme" class="btn-icon" type="button" aria-label="Toggle theme"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 7.5a5.5 5.5 0 0 0 9.9 3.28A5.5 5.5 0 0 1 6.22 1.1 5.5 5.5 0 0 0 2 7.5z"/></svg></button>
+
+      <!-- logout button -->
       <button id="btnLogout" class="btn ghost" type="button" hidden>Logout</button>
     </header>
 
     <main class="content">
+      <!-- page header -->
       <div class="page-hero" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
         <div>
           <div class="page-hero-tag">Main</div>
           <h1>Analytics</h1>
           <p>Revenue, sales performance, and inventory insights.</p>
         </div>
+        <!-- last updated text goes here -->
         <div id="analyticsUpdated" class="analytics-updated"></div>
       </div>
 
@@ -108,7 +139,7 @@
           </div>
         </div>
 
-        <!-- Charts -->
+        <!-- chart section -->
         <div class="charts-grid">
 
           <div class="card">
@@ -169,8 +200,10 @@
   </div>
 </div>
 
+<!-- normal toast message -->
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 
+<!-- popup modal for enlarged charts -->
 <div id="chartModal" class="chart-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="chartModalTitle" hidden>
   <div class="chart-modal-card">
     <div class="chart-modal-header">
@@ -185,10 +218,17 @@
   </div>
 </div>
 
+<!-- chart.js library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- main app javascript -->
 <script src="js/app.js"></script>
+
+<!-- analytics page logic -->
 <script>
 (function () {
+  // this page should only be visible to managers
+  // if no manager session exists, send them back to dashboard
   // ── Manager-only guard ─────────────────────────────────────────────────────
   const raw = localStorage.getItem('mt_dms_v2');
   const state = raw ? JSON.parse(raw) : null;
@@ -197,6 +237,7 @@
     return;
   }
 
+  // helper stuff for colors and formatting
   // ── Helpers ────────────────────────────────────────────────────────────────
   const isDark = () => document.documentElement.classList.contains('dark');
 
@@ -210,35 +251,42 @@
   const PALETTE_LIGHT = ['#1E3A5F', '#2E5B8A', '#3A74AC', '#4A8EC8', '#1A3252', '#0F2340'];
   function palette() { return isDark() ? PALETTE_DARK : PALETTE_LIGHT; }
 
+  // short money formatter for charts and kpis
   function fmtUSD(n) {
     if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
     if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
     return '$' + n.toLocaleString();
   }
 
+  // gets stored data arrays or empty ones if missing
   const txs       = state.transactions || [];
   const customers = state.customers    || [];
   const vehicles  = state.vehicles     || [];
 
+  // debug line just to check one transaction in console
   // ── DEBUG ──────────────────────────────────────────────────────────────────
   console.log('Transaction sample:', txs[0]);
 
+  // calculates top summary numbers
   // ── KPIs ───────────────────────────────────────────────────────────────────
   // Key is finalPurchaseUSD (not finalPriceUSD)
   const totalRevenue = txs.reduce((s, t) => s + Number(t.finalPurchaseUSD || 0), 0);
   const avgPrice     = txs.length ? Math.round(totalRevenue / txs.length) : 0;
 
+  // counts how many transactions each salesperson made
   const spCount = {};
   txs.forEach(t => { if (t.salesperson) spCount[t.salesperson] = (spCount[t.salesperson] || 0) + 1; });
   let topSP = '—', topSPCount = 0;
   Object.entries(spCount).forEach(([name, cnt]) => { if (cnt > topSPCount) { topSP = name; topSPCount = cnt; } });
 
+  // figures out inventory turn rate
   // Turn rate: txs link to vehicles via vehicleVinBuy = v.vin (not vehicleId/v.id)
   const totalSold   = txs.length;
   const totalListed = vehicles.reduce((s, v) =>
     s + Number(v.stock || 0) + txs.filter(t => t.vehicleVinBuy === v.vin).length, 0);
   const turnRate = totalListed ? Math.round((totalSold / totalListed) * 100) : 0;
 
+  // puts the kpi values onto the page
   document.getElementById('kpiRevenue').textContent          = fmtUSD(totalRevenue);
   document.getElementById('kpiAvgPrice').textContent         = fmtUSD(avgPrice);
   document.getElementById('kpiTopSales').textContent         = topSP.replace(/_/g, ' ');
@@ -247,12 +295,14 @@
   document.getElementById('analyticsUpdated').textContent    =
     'Last updated ' + new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
+  // sets chart defaults depending on light or dark mode
   // ── Chart.js defaults (mode-aware) ────────────────────────────────────────
   Chart.defaults.font.family = "'DM Sans', ui-sans-serif, sans-serif";
   Chart.defaults.font.size   = 12;
   Chart.defaults.color       = isDark() ? '#8B9CB3' : '#6B7280';
   Chart.defaults.borderColor = isDark() ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
+  // reusable base chart options
   function baseOpts(c, extra) {
     return {
       responsive: true,
@@ -262,6 +312,7 @@
     };
   }
 
+  // stores chart builders so charts can be recreated in modal view
   // ── Chart builder registry (stores factory fns for modal re-render) ────────
   const chartBuilders   = {};
   const chartInstances  = {};
@@ -271,6 +322,7 @@
     chartInstances[id] = new Chart(document.getElementById(id), factory());
   }
 
+  // chart for monthly revenue
   // ── Chart 1: Monthly Revenue ───────────────────────────────────────────────
   registerChart('chartRevenue', () => {
     const c   = chartColors();
@@ -298,6 +350,7 @@
     };
   });
 
+  // chart for transactions by salesperson
   // ── Chart 2: Sales by Salesperson ─────────────────────────────────────────
   registerChart('chartSales', () => {
     const c       = chartColors();
@@ -318,6 +371,7 @@
     };
   });
 
+  // chart for inventory grouped by category and condition
   // ── Chart 3: Inventory by Category & Condition ────────────────────────────
   registerChart('chartInventory', () => {
     const c          = chartColors();
@@ -346,6 +400,7 @@
     };
   });
 
+  // chart for customer credit score ranges
   // ── Chart 4: Credit Score Distribution ────────────────────────────────────
   registerChart('chartCredit', () => {
     const c      = chartColors();
@@ -367,6 +422,7 @@
     };
   });
 
+  // handles opening charts in the popup modal
   // ── Modal expand logic ─────────────────────────────────────────────────────
   let modalChart = null;
   const modal    = document.getElementById('chartModal');
@@ -390,6 +446,7 @@
     if (modalChart) { modalChart.destroy(); modalChart = null; }
   }
 
+  // wires up expand buttons
   document.querySelectorAll('.btn-expand').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -397,11 +454,13 @@
     });
   });
 
+  // closes modal when clicking backdrop or close button
   if (modal) {
     modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
     modal.querySelector('.btn-modal-close').addEventListener('click', closeModal);
   }
 
+  // closes modal with escape key
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 })();
