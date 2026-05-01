@@ -119,11 +119,32 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-/* ---- Auth (demo) ---- */
+/* ---- Auth ---- */
 
-function login(username, password, role) {
-  if (password !== "demo") return false;
-  state.session = { username, role };
+const USERS_KEY = "mt_users";
+
+function loadUsers() {
+  const parsed = safeJsonParse(localStorage.getItem(USERS_KEY));
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+function saveUsers(users) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function registerUser(username, password, role, fullName) {
+  const users = loadUsers();
+  if (users.find(u => u.username === username)) return { ok: false, msg: "Username already taken." };
+  users.push({ username, password, role, fullName: fullName || "" });
+  saveUsers(users);
+  return { ok: true };
+}
+
+function login(username, password) {
+  const users = loadUsers();
+  const user = users.find(u => u.username === username && u.password === password);
+  if (!user) return false;
+  state.session = { username: user.username, role: user.role };
   saveState();
   return true;
 }
@@ -940,10 +961,13 @@ $("#loginForm") && $("#loginForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const username = $("#loginUser").value.trim();
   const password = $("#loginPass").value;
-  const role = $("#loginRole").value;
 
-  if (!login(username, password, role)) {
-    toast("Invalid password (demo password is 'demo').");
+  if (!username || !password) {
+    toast("Username and password are required.");
+    return;
+  }
+  if (!login(username, password)) {
+    toast("Invalid username or password.");
     return;
   }
   toast(`Signed in as ${username}`);
@@ -966,7 +990,13 @@ $("#loginForm") && $("#loginForm").addEventListener("submit", (e) => {
 
 $("#btnLoadDemo") && $("#btnLoadDemo").addEventListener("click", () => {
   loadDemoData();
-  toast("Demo data loaded.");
+  const users = loadUsers();
+  if (users.length === 0) {
+    registerUser("demo", "demo", "manager", "Demo User");
+    toast("Demo data loaded. Sign in: demo / demo (manager).");
+  } else {
+    toast("Demo data loaded.");
+  }
   rerenderAll();
 });
 
@@ -1991,11 +2021,12 @@ function syncThemeIcon() {
 })();
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Register form (demo)
+   Register form
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 $("#registerForm") && $("#registerForm").addEventListener("submit", (e) => {
   e.preventDefault();
 
+  const fullName = $("#regName").value.trim();
   const username = $("#regUser").value.trim();
   const pass     = $("#regPass").value;
   const confirm  = $("#regPassConfirm").value;
@@ -2005,17 +2036,22 @@ $("#registerForm") && $("#registerForm").addEventListener("submit", (e) => {
     toast("Username is required.");
     return;
   }
+  if (!pass) {
+    toast("Password is required.");
+    return;
+  }
   if (pass !== confirm) {
     toast("Passwords don't match.");
     return;
   }
-  if (pass !== "demo") {
-    toast("Demo password must be 'demo'.");
+
+  const result = registerUser(username, pass, role, fullName);
+  if (!result.ok) {
+    toast(result.msg);
     return;
   }
 
-  if (login(username, pass, role)) {
-    toast(`Account created. Signed in as ${username} (${role}).`);
-    window.location.href = "dashboard.html";
-  }
+  login(username, pass);
+  toast(`Account created. Signed in as ${username} (${role}).`);
+  window.location.href = "dashboard.html";
 });
