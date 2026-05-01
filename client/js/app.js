@@ -427,6 +427,8 @@ function buildInvoiceText(tx) {
 
   const perks = getDiscountPerks(tx.price_paid);
 
+  const dl = state.driverLicenses.find(d => d.drivers_license_id === Number(customer.drivers_license_id));
+
   const lines = [
     "MR. TUCKER'S CAR DEALERSHIP",
     "INVOICE",
@@ -440,7 +442,16 @@ function buildInvoiceText(tx) {
     `Name: ${customer.customer_name}`,
     `Address: ${customer.address || "—"}`,
     `Phone: ${customer.phone || "—"}`,
-    `Driver's License ID: ${customer.drivers_license_id}`,
+    "",
+    "DRIVER'S LICENSE",
+    `License ID:   ${customer.drivers_license_id || "—"}`,
+    `Holder:       ${dl ? dl.holder_name : "—"}`,
+    `Date of Birth:${dl ? " " + dl.birth_date : " —"}`,
+    `Expiry:       ${dl ? dl.expiration_date : "—"}`,
+    `Sex:          ${dl ? dl.sex : "—"}`,
+    `Eye Color:    ${dl ? dl.eye_color || "—" : "—"}`,
+    `Weight:       ${dl ? (dl.weight ? dl.weight + " lbs" : "—") : "—"}`,
+    `Restrictions: ${dl ? dl.restrictions || "None" : "—"}`,
     "",
     "VEHICLE",
     `${vehicle.model_year} ${vehicle.vehicle_brand} (${vehicle.is_used === 0 ? "New" : "Used"})`,
@@ -1285,9 +1296,20 @@ $("#txList") && $("#txList").addEventListener("click", (e) => {
 
   if (act === "viewInvoice") {
     selectedInvoiceTxId = txId;
-    $("#invoicePreview") && ($("#invoicePreview").textContent = state.invoices[txId] || "Invoice not found.");
-    $("#btnPrintInvoice") && ($("#btnPrintInvoice").disabled = !state.invoices[txId]);
-    $("#btnCopyInvoice") && ($("#btnCopyInvoice").disabled = !state.invoices[txId]);
+    const tx = state.transactions.find(t => t.id === txId);
+    let invoiceText = "Invoice not found.";
+    if (tx) {
+      try {
+        invoiceText = buildInvoiceText(tx);
+        state.invoices[txId] = invoiceText;
+        saveState();
+      } catch (e) {
+        invoiceText = state.invoices[txId] || "Invoice not found.";
+      }
+    }
+    $("#invoicePreview") && ($("#invoicePreview").textContent = invoiceText);
+    $("#btnPrintInvoice") && ($("#btnPrintInvoice").disabled = invoiceText === "Invoice not found.");
+    $("#btnCopyInvoice") && ($("#btnCopyInvoice").disabled = invoiceText === "Invoice not found.");
     toast("Invoice loaded.");
   }
 
