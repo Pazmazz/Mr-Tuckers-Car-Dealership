@@ -69,15 +69,17 @@ router.post('/', async (req, res) => {
 // Update a pre-existing customer
 router.put('/:id', async (req, res) => {
     try {
-        const { customer_name, credit_score, drivers_license_id, credit_card_number } = req.body;
+        const { customer_name, credit_score, drivers_license_id, credit_card_number, address, phone } = req.body;
         const customer = await prisma.customer.update({
             where: { customer_id: Number(req.params.id) },
             data: {
                 // Spread each field only if provided (partial update pattern)
-                ...(customer_name    !== undefined && { customer_name }),
-                ...(credit_score     !== undefined && { credit_score }),
+                ...(customer_name      !== undefined && { customer_name }),
+                ...(credit_score       !== undefined && { credit_score }),
                 ...(drivers_license_id !== undefined && { drivers_license_id }),
                 ...(credit_card_number !== undefined && { credit_card_number }),
+                ...(address            !== undefined && { address }),
+                ...(phone              !== undefined && { phone }),
             },
             include: {
                 Driver_s_License: true,

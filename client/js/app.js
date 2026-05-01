@@ -72,6 +72,25 @@ async function apiPost(endpoint, data) {
   }
 }
 
+// Sends data to the backend using a PUT request (used for updating existing records)
+async function apiPut(endpoint, data) {
+  try {
+    const res = await fetch(`${API}/${endpoint}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Server error");
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("API error:", err.message);
+    throw err;
+  }
+}
+
 // Sends a DELETE request to the backend to remove a specific record
 // The endpoint should include the ID, like "customers/123"
 async function apiDelete(endpoint) {
@@ -1150,25 +1169,24 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
       address: $("#custAddress").value.trim(),
       phone: $("#cust_phone").value.trim()
     };
-    upsertCustomer(c);
-
     // ----- Jaylen API Routing -----
-    // Add customer form data into prisma
-    const saved = await apiPost("customers", {
+    let saved;
+    const payload = {
       customer_name: c.customer_name,
       credit_score: c.credit_score,
       address: c.address,
       phone: c.phone,
       drivers_license_id: c.drivers_license_id,
-      credit_card_number: c.credit_card_number        
-    });
-    // ------------------------------
-    
-    const idx = state.customers.findIndex(cu => cu.drivers_license_id === c.drivers_license_id);
-    if (idx >= 0 && saved?.customer_id) {
-      state.customers[idx].customer_id = saved.customer_id;
-      saveState();
+      credit_card_number: c.credit_card_number
+    };
+    if (c.customer_id) {
+      saved = await apiPut(`customers/${c.customer_id}`, payload);
+    } else {
+      saved = await apiPost("customers", payload);
     }
+    // ------------------------------
+
+    upsertCustomer({ ...c, customer_id: saved.customer_id });
 
     toast("Customer saved.");
     $("#customerForm").reset();
@@ -1176,6 +1194,7 @@ $("#customerForm") && $("#customerForm").addEventListener("submit", async (e) =>
     rerenderAll();
   } catch (err) {
     toast(err.message || "Failed to save customer.");
+    rerenderAll();
   }
 });
 
