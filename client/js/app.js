@@ -1519,12 +1519,31 @@ function renderDcQuotes() {
   }
 })();
 
+/* ━━ Register-employee page: pre-fill form when navigated via ?edit=<id> ━━ */
+(function initRegisterEmployeePage() {
+  if (!$("#employeeForm")) return;
+  const params = new URLSearchParams(window.location.search);
+  const editId = params.get("edit");
+  if (!editId) return;
+  const emp = state.employees.find(x => x.id === editId);
+  if (!emp) return;
+  if ($("#emp_internal_id"))   $("#emp_internal_id").value = emp.id;
+  if ($("#emp_employee_id"))   $("#emp_employee_id").value = emp.employee_id != null ? emp.employee_id : "";
+  if ($("#emp_employee_name")) $("#emp_employee_name").value = emp.employee_name || "";
+  if ($("#empDepartment"))     $("#empDepartment").value = emp.department || "";
+  if ($("#emp_manager"))       $("#emp_manager").value = emp.manager != null ? emp.manager : 0;
+  if ($("#emp_commission"))    $("#emp_commission").value = emp.commission != null ? emp.commission : 0;
+  toast("Editing " + (emp.employee_name || "employee") + ".");
+})();
+
 /* ---- Employee form ---- */
 
 $("#employeeForm") && $("#employeeForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
+    const isEditing = !!($("#emp_internal_id")?.value);
     const emp = {
+      id: $("#emp_internal_id")?.value || undefined,
       employee_id: Number($("#emp_employee_id").value) || undefined,
       employee_name: $("#emp_employee_name").value.trim(),
       department: $("#empDepartment").value.trim(),
@@ -1533,34 +1552,37 @@ $("#employeeForm") && $("#employeeForm").addEventListener("submit", async (e) =>
     };
     upsertEmployee(emp);
 
-    // ----- Jaylen API Routing -----
-    // Add employee data into prisma
-    const saved = await apiPost("register-employee", {
-      employee_name: emp.employee_name,
-      department: emp.department,
-      manager: emp.manager,
-      commission: emp.commission
-    });
-    // ------------------------------
+    if (!isEditing) {
+      // ----- Jaylen API Routing -----
+      // Add employee data into prisma
+      const saved = await apiPost("register-employee", {
+        employee_name: emp.employee_name,
+        department: emp.department,
+        manager: emp.manager,
+        commission: emp.commission
+      });
+      // ------------------------------
 
-    const idx = state.employees.findIndex(cu => cu.employee_name === emp.employee_name);
-    if (idx >= 0 && saved?.employee_id) {
-      state.employees[idx].employee_id = saved.employee_id;
-      saveState();
+      const idx = state.employees.findIndex(cu => cu.employee_name === emp.employee_name);
+      if (idx >= 0 && saved?.employee_id) {
+        state.employees[idx].employee_id = saved.employee_id;
+        saveState();
+      }
     }
 
-    toast("Employee registered.");
+    toast(isEditing ? "Employee updated." : "Employee registered.");
     $("#employeeForm").reset();
     $("#emp_employee_id").value = "";
+    if ($("#emp_internal_id")) $("#emp_internal_id").value = "";
     rerenderAll();
   } catch (err) {
-    toast(err.message || "Failed to register employee.");
+    toast(err.message || "Failed to save employee.");
   }
 });
 
 $("#btnEmpReset") && $("#btnEmpReset").addEventListener("click", () => {
   $("#employeeForm") && $("#employeeForm").reset();
-  if ($("#employeeId")) $("#employeeId").value = "";
+  if ($("#emp_internal_id")) $("#emp_internal_id").value = "";
 });
 
 $("#employeesTable") && $("#employeesTable").addEventListener("click", async (e) => {
@@ -1570,33 +1592,24 @@ $("#employeesTable") && $("#employeesTable").addEventListener("click", async (e)
   const id  = btn.dataset.id;
 
   if (act === "editEmp") {
-    const emp = state.employees.find(x => x.employee_id === Number(id));
+    const emp = state.employees.find(x => x.id === id);
     if (!emp) return;
-    if ($("#employeeId")) {
-      $("#employeeId").value = emp.id;
-      if ($("#emp_employee_name")) $("#emp_employee_name").value = emp.employee_name || emp.name || "";
-      if ($("#emp_employee_id"))   $("#emp_employee_id").value = emp.employee_id != null ? emp.employee_id : "";
-      if ($("#empDepartment"))     $("#empDepartment").value = emp.department || "";
-      if ($("#emp_manager"))       $("#emp_manager").value = emp.manager != null ? emp.manager : "";
-      if ($("#emp_commission"))    $("#emp_commission").value = emp.commission != null ? emp.commission : "";
-      toast("Editing employee.");
-    } else {
-      location.href = "register-employee.html?edit=" + encodeURIComponent(id);
-    }
+    location.href = "register-employee.html?edit=" + encodeURIComponent(id);
   }
 
   if (act === "delEmp") {
-    const emp = state.employees.find(x => x.employee_id === Number(id));
+    const emp = state.employees.find(x => x.id === id);
     if (!emp) return;
     deleteEmployee(id);
-
-    // ----- Jaylen API Routing -----
-    // Delete employee data from prisma
-    await apiDelete(`register-employee/${emp.employee_id}`);
-    // ------------------------------
-    
     toast("Employee removed.");
     rerenderAll();
+
+    // ----- Jaylen API Routing -----
+    // Delete employee data from prisma (fire-and-forget — UI already updated)
+    if (emp.employee_id) {
+      apiDelete(`register-employee/${emp.employee_id}`).catch(() => {});
+    }
+    // ------------------------------
   }
 });
 
