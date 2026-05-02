@@ -6,6 +6,11 @@
 
 const STORAGE_KEY = "mt_dms_v2";
 
+// Backend API base URL. Only GET /api/vehicles/ is currently active.
+// Customer, credit card, driver's license, and employee endpoints are not
+// present in the current server — those entities stay in localStorage.
+const API_BASE = "http://localhost:3000";
+
 const DEFAULT_DISCOUNT_RULE = {
   thresholdUSD: 50000,
   perkText: "Eligible for the monthly car wash discount (purchase over $50k)."
@@ -936,30 +941,55 @@ $("#btnLoadDemo") && $("#btnLoadDemo").addEventListener("click", () => {
   rerenderAll();
 });
 
-$("#vehicleForm") && $("#vehicleForm").addEventListener("submit", (e) => {
+// ===== (Zaid) START =====
+$("#vehicleForm") && $("#vehicleForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const v = {
+    id: $("#vehicleId").value || undefined,
+    vin: $("#vehicleVin").value,
+    make: $("#vehicleMake").value,
+    model: $("#vehicleModel").value,
+    year: Number($("#vehicleYear").value),
+    category: $("#vehicleCategory").value,
+    condition: $("#vehicleCondition").value,
+    mileage: Number($("#vehicleMileage").value || 0),
+    price: Number($("#vehiclePrice").value),
+    stock: Number($("#vehicleStock").value)
+  };
+  const apiPayload = {
+    vehicle_type: v.model,
+    vehicle_brand: v.make,
+    model_year: v.year,
+    is_used: v.condition === "used" ? 1 : 0,
+    mileage: v.mileage,
+    vehicle_price: v.price
+  };
   try {
-    const v = {
-      id: $("#vehicleId").value || undefined,
-      vin: $("#vehicleVin").value,
-      make: $("#vehicleMake").value,
-      model: $("#vehicleModel").value,
-      year: Number($("#vehicleYear").value),
-      category: $("#vehicleCategory").value,
-      condition: $("#vehicleCondition").value,
-      mileage: Number($("#vehicleMileage").value || 0),
-      price: Number($("#vehiclePrice").value),
-      stock: Number($("#vehicleStock").value)
-    };
-    upsertVehicle(v);
-    toast("Vehicle saved.");
-    $("#vehicleForm").reset();
-    $("#vehicleId").value = "";
-    rerenderAll();
+    const existingVehicle = state.vehicles.find(x => x.vin === v.vin.trim());
+    const apiVehId = existingVehicle && /^\d+$/.test(String(existingVehicle.id)) ? existingVehicle.id : null;
+    const res = apiVehId
+      ? await fetch(API_BASE + "/api/vehicles/" + apiVehId, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(apiPayload)
+        })
+      : await fetch(API_BASE + "/api/vehicles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(apiPayload)
+        });
+    if (!res.ok) throw new Error("API error " + res.status);
+    await loadVehiclesFromAPI();
   } catch (err) {
-    toast(err.message || "Failed to save vehicle.");
+    console.warn("[API] Vehicle save failed, using localStorage:", err.message);
+    upsertVehicle(v);
   }
+  toast("Vehicle saved.");
+  $("#vehicleForm").reset();
+  $("#vehicleId").value = "";
+  rerenderAll();
 });
+// ===== (Zaid) END =====
 
 $("#btnVehicleReset") && $("#btnVehicleReset").addEventListener("click", () => {
   $("#vehicleForm").reset();
@@ -968,7 +998,8 @@ $("#btnVehicleReset") && $("#btnVehicleReset").addEventListener("click", () => {
 
 $("#inventoryFilter") && $("#inventoryFilter").addEventListener("input", renderInventory);
 
-$("#inventoryList") && $("#inventoryList").addEventListener("click", (e) => {
+// ===== (Zaid) START =====
+$("#inventoryList") && $("#inventoryList").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn) return;
 
@@ -992,38 +1023,69 @@ $("#inventoryList") && $("#inventoryList").addEventListener("click", (e) => {
   }
 
   if (act === "delVehicle") {
-    deleteVehicle(vin);
+    const vehToDelete = state.vehicles.find(x => x.vin === vin);
+    const apiVehId = vehToDelete && /^\d+$/.test(String(vehToDelete.id)) ? vehToDelete.id : null;
+    if (apiVehId) {
+      try {
+        const res = await fetch(API_BASE + "/api/vehicles/" + apiVehId, { method: "DELETE" });
+        if (!res.ok) throw new Error("API error " + res.status);
+        await loadVehiclesFromAPI();
+      } catch (err) {
+        console.warn("[API] Vehicle DELETE failed, using localStorage:", err.message);
+        deleteVehicle(vin);
+      }
+    } else {
+      deleteVehicle(vin);
+    }
     toast("Vehicle deleted.");
     rerenderAll();
   }
 });
+// ===== (Zaid) END =====
 
 $("#btnExportInventory") && $("#btnExportInventory").addEventListener("click", () => {
   downloadJson(state.vehicles, "inventory.json");
 });
 
-$("#customerForm") && $("#customerForm").addEventListener("submit", (e) => {
+// ===== (Zaid) START =====
+$("#customerForm") && $("#customerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const c = {
+    customer_id: $("#customerId").value || undefined,
+    customer_name: $("#cust_customer_name").value.trim(),
+    credit_score: Number($("#cust_credit_score").value),
+    drivers_license_id: Number($("#cust_drivers_license_id").value) || undefined,
+    credit_card_number: Number($("#cust_credit_card_number").value) || undefined,
+    address: $("#custAddress").value.trim(),
+    phone1: $("#custPhone1").value.trim(),
+    phone2: $("#custPhone2").value.trim()
+  };
   try {
-    const c = {
-      customer_id: $("#customerId").value || undefined,
-      customer_name: $("#cust_customer_name").value.trim(),
-      credit_score: Number($("#cust_credit_score").value),
-      drivers_license_id: Number($("#cust_drivers_license_id").value) || undefined,
-      credit_card_number: Number($("#cust_credit_card_number").value) || undefined,
-      address: $("#custAddress").value.trim(),
-      phone1: $("#custPhone1").value.trim(),
-      phone2: $("#custPhone2").value.trim()
-    };
-    upsertCustomer(c);
-    toast("Customer saved.");
-    $("#customerForm").reset();
-    $("#customerId").value = "";
-    rerenderAll();
+    if (!c.customer_name) throw new Error("Customer name is required.");
+    if (!c.drivers_license_id) throw new Error("A driver's license must be selected.");
+    if (!c.credit_card_number) throw new Error("A credit card must be selected.");
+    const res = await fetch(API_BASE + "/api/customers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer_name: c.customer_name,
+        credit_score: c.credit_score,
+        drivers_license_id: c.drivers_license_id,
+        credit_card_number: c.credit_card_number
+      })
+    });
+    if (!res.ok) throw new Error("API error " + res.status);
+    await loadCustomersFromAPI();
   } catch (err) {
-    toast(err.message || "Failed to save customer.");
+    console.warn("[API] Customer POST failed, using localStorage:", err.message);
+    try { upsertCustomer(c); } catch (e2) { toast(e2.message || "Failed to save customer."); return; }
   }
+  toast("Customer saved.");
+  $("#customerForm").reset();
+  $("#customerId").value = "";
+  rerenderAll();
 });
+// ===== (Zaid) END =====
 
 $("#btnCustomerReset") && $("#btnCustomerReset").addEventListener("click", () => {
   $("#customerForm").reset();
@@ -1363,28 +1425,42 @@ function renderDcQuotes() {
 
 /* ---- Employee form ---- */
 
-$("#employeeForm") && $("#employeeForm").addEventListener("submit", (e) => {
+// ===== (Zaid) START =====
+$("#employeeForm") && $("#employeeForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const emp = {
+    id: $("#employeeId").value || undefined,
+    employee_id: Number($("#emp_employee_id").value) || undefined,
+    employee_name: $("#emp_employee_name").value.trim(),
+    username: $("#empUsername").value.trim(),
+    role: $("#empRole").value,
+    department: $("#empDepartment").value.trim(),
+    manager: Number($("#emp_manager").value) || 0,
+    commission: Number($("#emp_commission").value) || 0
+  };
   try {
-    const emp = {
-      id: $("#employeeId").value || undefined,
-      employee_id: Number($("#emp_employee_id").value) || undefined,
-      employee_name: $("#emp_employee_name").value.trim(),
-      username: $("#empUsername").value.trim(),
-      role: $("#empRole").value,
-      department: $("#empDepartment").value.trim(),
-      manager: Number($("#emp_manager").value) || 0,
-      commission: Number($("#emp_commission").value) || 0
-    };
-    upsertEmployee(emp);
-    toast("Employee registered.");
-    $("#employeeForm").reset();
-    $("#employeeId").value = "";
-    rerenderAll();
+    const res = await fetch(API_BASE + "/api/employees", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        employee_name: emp.employee_name,
+        department: emp.department,
+        manager: emp.manager,
+        commission: emp.commission
+      })
+    });
+    if (!res.ok) throw new Error("API error " + res.status);
+    await loadEmployeesFromAPI();
   } catch (err) {
-    toast(err.message || "Failed to register employee.");
+    console.warn("[API] Employee POST failed, using localStorage:", err.message);
+    upsertEmployee(emp);
   }
+  toast("Employee registered.");
+  $("#employeeForm").reset();
+  $("#employeeId").value = "";
+  rerenderAll();
 });
+// ===== (Zaid) END =====
 
 $("#btnEmpReset") && $("#btnEmpReset").addEventListener("click", () => {
   $("#employeeForm") && $("#employeeForm").reset();
@@ -1424,30 +1500,49 @@ $("#employeesTable") && $("#employeesTable").addEventListener("click", (e) => {
 
 /* ---- Driver's license form ---- */
 
-$("#dlForm") && $("#dlForm").addEventListener("submit", (e) => {
+// ===== (Zaid) START =====
+$("#dlForm") && $("#dlForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const dl = {
+    id: $("#dlId").value || undefined,
+    drivers_license_id: Number($("#dl_drivers_license_id").value),
+    holder_name: $("#dl_holder_name").value.trim(),
+    birth_date: $("#dl_birth_date").value,
+    expiration_date: $("#dl_expiration_date").value,
+    sex: $("#dl_sex").value,
+    eye_color: $("#dl_eye_color").value.trim(),
+    weight: Number($("#dl_weight").value || 0),
+    address: $("#dl_address").value.trim(),
+    restrictions: $("#dl_restrictions").value.trim()
+  };
   try {
-    const dl = {
-      id: $("#dlId").value || undefined,
-      drivers_license_id: Number($("#dl_drivers_license_id").value),
-      holder_name: $("#dl_holder_name").value.trim(),
-      birth_date: $("#dl_birth_date").value,
-      expiration_date: $("#dl_expiration_date").value,
-      sex: $("#dl_sex").value,
-      eye_color: $("#dl_eye_color").value.trim(),
-      weight: Number($("#dl_weight").value || 0),
-      address: $("#dl_address").value.trim(),
-      restrictions: $("#dl_restrictions").value.trim()
-    };
-    upsertDriverLicense(dl);
-    toast("Driver's license saved.");
-    $("#dlForm").reset();
-    $("#dlId").value = "";
-    rerenderAll();
+    const res = await fetch(API_BASE + "/api/driver-licenses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        drivers_license_id: dl.drivers_license_id,
+        holder_name: dl.holder_name,
+        expiration_date: dl.expiration_date,
+        address: dl.address,
+        birth_date: dl.birth_date,
+        sex: dl.sex,
+        eye_color: dl.eye_color,
+        weight: dl.weight,
+        restrictions: dl.restrictions
+      })
+    });
+    if (!res.ok) throw new Error("API error " + res.status);
+    await loadDriverLicensesFromAPI();
   } catch (err) {
-    toast(err.message || "Failed to save license.");
+    console.warn("[API] Driver license POST failed, using localStorage:", err.message);
+    upsertDriverLicense(dl);
   }
+  toast("Driver's license saved.");
+  $("#dlForm").reset();
+  $("#dlId").value = "";
+  rerenderAll();
 });
+// ===== (Zaid) END =====
 
 $("#btnDlReset") && $("#btnDlReset").addEventListener("click", () => {
   $("#dlForm") && $("#dlForm").reset();
@@ -1485,26 +1580,41 @@ $("#dlList") && $("#dlList").addEventListener("click", (e) => {
 
 /* ---- Credit card form ---- */
 
-$("#ccForm") && $("#ccForm").addEventListener("submit", (e) => {
+// ===== (Zaid) START =====
+$("#ccForm") && $("#ccForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const cc = {
+    id: $("#ccId").value || undefined,
+    credit_card_number: Number($("#cc_credit_card_number").value),
+    holder_name: $("#cc_holder_name").value.trim(),
+    security_code: Number($("#cc_security_code").value || 0),
+    expiration_date: $("#cc_expiration_date").value.trim(),
+    zip_code: Number($("#cc_zip_code").value || 0)
+  };
   try {
-    const cc = {
-      id: $("#ccId").value || undefined,
-      credit_card_number: Number($("#cc_credit_card_number").value),
-      holder_name: $("#cc_holder_name").value.trim(),
-      security_code: Number($("#cc_security_code").value || 0),
-      expiration_date: $("#cc_expiration_date").value.trim(),
-      zip_code: Number($("#cc_zip_code").value || 0)
-    };
-    upsertCreditCard(cc);
-    toast("Credit card saved.");
-    $("#ccForm").reset();
-    $("#ccId").value = "";
-    rerenderAll();
+    const res = await fetch(API_BASE + "/api/credit-cards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        credit_card_number: cc.credit_card_number,
+        holder_name: cc.holder_name,
+        security_code: cc.security_code,
+        expiration_date: cc.expiration_date,
+        zip_code: cc.zip_code
+      })
+    });
+    if (!res.ok) throw new Error("API error " + res.status);
+    await loadCreditCardsFromAPI();
   } catch (err) {
-    toast(err.message || "Failed to save card.");
+    console.warn("[API] Credit card POST failed, using localStorage:", err.message);
+    upsertCreditCard(cc);
   }
+  toast("Credit card saved.");
+  $("#ccForm").reset();
+  $("#ccId").value = "";
+  rerenderAll();
 });
+// ===== (Zaid) END =====
 
 $("#btnCcReset") && $("#btnCcReset").addEventListener("click", () => {
   $("#ccForm") && $("#ccForm").reset();
@@ -1757,6 +1867,105 @@ function revealPage() {
   }));
 }
 
+/* ---- API: vehicles (GET /api/vehicles/) ---- */
+
+// Maps the backend Vehicle schema fields to the client state shape.
+// The backend schema uses: vehicle_id, vehicle_brand, vehicle_type, model_year,
+// is_used (0/1), mileage, vehicle_price.
+// The client uses: id, vin, make, model, year, category, condition, mileage, price, stock.
+// Note: vin, model, and stock are not in the backend schema — they are synthesized.
+function normalizeApiVehicle(v) {
+  return {
+    id: String(v.vehicle_id),
+    vin: v.vin || ("API-" + v.vehicle_id),
+    make: v.vehicle_brand || "Unknown",
+    model: v.vehicle_type || "",
+    year: Number(v.model_year || 0),
+    category: v.vehicle_type || "family",
+    condition: v.is_used ? "used" : "new",
+    mileage: Number(v.mileage || 0),
+    price: Number(v.vehicle_price || 0),
+    stock: Number(v.stock != null ? v.stock : 1)
+  };
+}
+
+async function loadVehiclesFromAPI() {
+  try {
+    const res = await fetch(API_BASE + "/api/vehicles/");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const apiVehicles = await res.json();
+    if (!Array.isArray(apiVehicles)) return false;
+    state.vehicles = apiVehicles.map(normalizeApiVehicle);
+    saveState();
+    return true;
+  } catch (e) {
+    console.warn("[API] Vehicle fetch failed, using localStorage:", e.message);
+    return false;
+  }
+}
+
+// ===== (Zaid) START =====
+async function loadCustomersFromAPI() {
+  try {
+    const res = await fetch(API_BASE + "/api/customers");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data)) return false;
+    state.customers = data.map(c => ({ ...c, id: String(c.customer_id), txHistory: [] }));
+    saveState();
+    return true;
+  } catch (e) {
+    console.warn("[API] Customer fetch failed, using localStorage:", e.message);
+    return false;
+  }
+}
+
+async function loadDriverLicensesFromAPI() {
+  try {
+    const res = await fetch(API_BASE + "/api/driver-licenses");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data)) return false;
+    state.driverLicenses = data.map(d => ({ ...d, id: uid("dl") }));
+    saveState();
+    return true;
+  } catch (e) {
+    console.warn("[API] Driver license fetch failed, using localStorage:", e.message);
+    return false;
+  }
+}
+
+async function loadCreditCardsFromAPI() {
+  try {
+    const res = await fetch(API_BASE + "/api/credit-cards");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data)) return false;
+    state.creditCards = data.map(c => ({ ...c, id: uid("cc") }));
+    saveState();
+    return true;
+  } catch (e) {
+    console.warn("[API] Credit card fetch failed, using localStorage:", e.message);
+    return false;
+  }
+}
+
+async function loadEmployeesFromAPI() {
+  try {
+    const res = await fetch(API_BASE + "/api/employees");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data)) return false;
+    state.employees = data.map(e => ({ ...e, id: String(e.employee_id) }));
+    saveState();
+    return true;
+  } catch (e) {
+    console.warn("[API] Employee fetch failed, using localStorage:", e.message);
+    return false;
+  }
+}
+// ===== (Zaid) END =====
+
 /* ---- Boot ---- */
 
 if (!window.location.pathname.endsWith("login.html")) requireAuth();
@@ -1770,6 +1979,21 @@ if (_sidebarEl) {
 }
 
 rerenderAll();
+
+// ===== (Zaid) START =====
+// Load all entities from API in parallel. Falls back to localStorage on failure.
+// Rerenders once when all responses arrive so the UI reflects live backend data.
+(async function bootFromAPI() {
+  const results = await Promise.all([
+    loadVehiclesFromAPI(),
+    loadCustomersFromAPI(),
+    loadDriverLicensesFromAPI(),
+    loadCreditCardsFromAPI(),
+    loadEmployeesFromAPI()
+  ]);
+  if (results.some(Boolean)) rerenderAll();
+})();
+// ===== (Zaid) END =====
 
 // Pre-populate employee form from ?edit= URL param on register-employee.html
 (function() {
